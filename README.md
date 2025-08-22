@@ -66,6 +66,9 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 - PDF thumbnails/text extract missing: ensure ImageMagick, Ghostscript, Poppler are installed (baked into image). For very large PDFs, resource limits may apply.
 - DB not ready on first start: the web container waits for DB; if stuck, check `docker compose logs db`.
 
+## Verifying Extensions
+See `docs/extension-checks.md` for quick ways to verify each extension is enabled and working.
+
 ## Security Notes
 - Change default admin password in `.env` before first run or immediately after via Special:ChangePassword.
 - `.env` is gitignored; store secrets outside version control.
@@ -79,4 +82,3 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 
 ## License
 This repository contains configuration and setup scripts. MediaWiki and extensions are licensed by their respective authors.
-

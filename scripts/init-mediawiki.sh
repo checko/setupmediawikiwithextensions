@@ -22,6 +22,14 @@ until mysqladmin ping -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --si
 done
 echo "[init] Database is up."
 
+# Ensure MsUpload extension exists (clone if missing)
+if [ ! -d "${MW_DIR}/extensions/MsUpload" ]; then
+  echo "[init] Fetching MsUpload extension..."
+  if ! git clone --depth 1 -b REL1_41 https://github.com/wikimedia/mediawiki-extensions-MsUpload "${MW_DIR}/extensions/MsUpload"; then
+    echo "[init] Warning: failed to fetch MsUpload (will proceed without)."
+  fi
+fi
+
 if [ ! -f LocalSettings.php ]; then
   echo "[init] Running MediaWiki installer..."
   # Non-interactive install
@@ -45,6 +53,16 @@ if [ ! -f LocalSettings.php ]; then
     ln -s /data/LocalSettings.php LocalSettings.php
   fi
 
+  # Try to install Semantic MediaWiki via Composer before enabling it
+  SMW_OK=0
+  echo "[init] Installing Semantic MediaWiki via Composer..."
+  if composer --no-interaction --no-progress require "mediawiki/semantic-media-wiki:~4.1"; then
+    SMW_OK=1
+    echo "[init] Semantic MediaWiki installed."
+  else
+    echo "[init] Warning: Semantic MediaWiki install failed; proceeding without enabling SMW."
+  fi
+
   # Append our extension and upload configuration if not already present
   if ! grep -q "# BEGIN: custom extensions" /data/LocalSettings.php; then
     cat >> /data/LocalSettings.php <<'PHP'
@@ -56,7 +74,6 @@ wfLoadExtension( 'PdfHandler' );
 wfLoadExtension( 'MultimediaViewer' );
 wfLoadExtension( 'MsUpload' );
 wfLoadExtension( 'VisualEditor' );
-wfLoadExtension( 'SemanticMediaWiki' );
 
 $wgEnableUploads = true;
 $wgUseImageMagick = true;
@@ -69,11 +86,14 @@ $wgDefaultUserOptions['visualeditor-editor'] = 'visualeditor';
 
 # MsUpload: allow registered users to upload
 $wgGroupPermissions['user']['upload'] = true;
-
-# Semantic MediaWiki: enable semantics for this domain
-enableSemantics( parse_url( $wgServer, PHP_URL_HOST ) );
 # END: custom extensions
 PHP
+  fi
+
+  # If SMW was installed, enable it now (after the heredoc to safely toggle)
+  if [ "$SMW_OK" = "1" ]; then
+    echo "wfLoadExtension( 'SemanticMediaWiki' );" >> /data/LocalSettings.php
+    echo "enableSemantics( parse_url( \$wgServer, PHP_URL_HOST ) );" >> /data/LocalSettings.php
   fi
 
   echo "[init] Running maintenance/update.php (including SMW tables)..."
@@ -82,4 +102,3 @@ fi
 
 echo "[init] Starting Apache..."
 exec apache2-foreground
-

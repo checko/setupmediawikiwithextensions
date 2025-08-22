@@ -34,9 +34,9 @@ services:
     volumes:
       - wiki_images:/var/www/html/images
       - ./data:/data
+      - ./php/conf.d/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     restart: unless-stopped
 
 volumes:
   db_data:
   wiki_images:
-
