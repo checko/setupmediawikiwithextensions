@@ -1,0 +1,43 @@
+FROM mediawiki:1.41
+
+# Install required system packages for PdfHandler and tooling
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git curl unzip \
+        mariadb-client \
+        imagemagick ghostscript poppler-utils \
+        ca-certificates \
+        less vim-tiny \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Composer (for Semantic MediaWiki)
+RUN curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php \
+    && php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer \
+    && rm -f /tmp/composer-setup.php
+
+WORKDIR /var/www/html
+
+# Fetch extensions (use REL1_41 branches where applicable); skip if already present
+RUN set -eux; \
+    EXT_DIR=/var/www/html/extensions; \
+    mkdir -p "$EXT_DIR"; \
+    fetch_ext() { n="$1"; url="$2"; branch="${3:-REL1_41}"; if [ ! -d "$EXT_DIR/$n" ]; then git clone --depth 1 -b "$branch" "$url" "$EXT_DIR/$n"; fi; }; \
+    # Some may already be bundled; cloning is skipped if present
+    fetch_ext MsUpload           https://gerrit.wikimedia.org/r/mediawiki/extensions/MsUpload; \
+    fetch_ext WikiEditor         https://gerrit.wikimedia.org/r/mediawiki/extensions/WikiEditor; \
+    fetch_ext MultimediaViewer   https://gerrit.wikimedia.org/r/mediawiki/extensions/MultimediaViewer; \
+    fetch_ext PdfHandler         https://gerrit.wikimedia.org/r/mediawiki/extensions/PdfHandler; \
+    fetch_ext SemanticMediaWiki  https://gerrit.wikimedia.org/r/mediawiki/extensions/SemanticMediaWiki; \
+    fetch_ext VisualEditor       https://gerrit.wikimedia.org/r/mediawiki/extensions/VisualEditor; \
+    fetch_ext CodeEditor         https://gerrit.wikimedia.org/r/mediawiki/extensions/CodeEditor;
+
+# Install Semantic MediaWiki via Composer (pulls required PHP deps)
+RUN composer --no-interaction --no-progress require "mediawiki/semantic-media-wiki:~4.1"
+
+# Init/entry script to auto-install MW and enable extensions
+COPY scripts/init-mediawiki.sh /usr/local/bin/init-mediawiki.sh
+RUN chmod +x /usr/local/bin/init-mediawiki.sh
+
+# Start Apache after init
+CMD ["/usr/local/bin/init-mediawiki.sh"]
+

@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  db:
+    image: mariadb:10.6
+    restart: unless-stopped
+    environment:
+      - MARIADB_DATABASE=${MW_DB_NAME:-wikidb}
+      - MARIADB_USER=${MW_DB_USER:-wiki}
+      - MARIADB_PASSWORD=${MW_DB_PASS:-wiki_pass}
+      - MARIADB_ROOT_PASSWORD=${MW_DB_ROOT_PASSWORD:-root_pass}
+    volumes:
+      - db_data:/var/lib/mysql
+
+  mediawiki:
+    build:
+      context: .
+      dockerfile: Dockerfile.mediawiki
+    depends_on:
+      - db
+    ports:
+      - "9090:80"
+    environment:
+      - MW_SITE_NAME=${MW_SITE_NAME:-MyWiki}
+      - MW_LANG=${MW_LANG:-en}
+      - MW_ADMIN_USER=${MW_ADMIN_USER:-Admin}
+      - MW_ADMIN_PASS=${MW_ADMIN_PASS:-changeme123!}
+      - MW_DB_HOST=db
+      - MW_DB_NAME=${MW_DB_NAME:-wikidb}
+      - MW_DB_USER=${MW_DB_USER:-wiki}
+      - MW_DB_PASS=${MW_DB_PASS:-wiki_pass}
+      - MW_DB_ROOT_PASSWORD=${MW_DB_ROOT_PASSWORD:-root_pass}
+      - MW_SITE_SERVER=${MW_SITE_SERVER:-http://localhost:9090}
+    volumes:
+      - wiki_images:/var/www/html/images
+      - ./data:/data
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  wiki_images:
+

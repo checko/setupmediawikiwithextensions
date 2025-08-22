@@ -1,0 +1,15 @@
+# Env and local overrides
+.env
+
+# Local MediaWiki config persisted by init script
+data/
+
+# Node/editor junk
+.DS_Store
+.idea/
+.vscode/
+
+# Composer cache (if used locally)
+vendor/
+composer.lock
+
