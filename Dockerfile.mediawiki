@@ -6,7 +6,6 @@ RUN apt-get update \
         git curl unzip \
         mariadb-client \
         imagemagick ghostscript poppler-utils \
-        libgetid3-php \
         ffmpeg \
         ca-certificates \
         less vim-tiny \
@@ -34,6 +33,9 @@ RUN set -eux; \
     fi;
 
 # Note: Semantic MediaWiki will be installed at runtime via composer inside the container
+
+# Install getID3 via Composer for TimedMediaHandler metadata support
+RUN composer --no-interaction --no-progress require 'james-heinrich/getid3:^2.0'
 
 # Init/entry script to auto-install MW and enable extensions
 COPY scripts/init-mediawiki.sh /usr/local/bin/init-mediawiki.sh
