@@ -112,6 +112,37 @@ PHP
   php maintenance/update.php --quick
 fi
 
+# Ensure custom extension config block exists even if using a pre-existing LocalSettings.php
+if [ -f /data/LocalSettings.php ] && ! grep -q "# BEGIN: custom extensions" /data/LocalSettings.php; then
+  echo "[init] Appending custom extension configuration to LocalSettings.php..."
+  cat >> /data/LocalSettings.php <<'PHP'
+
+# BEGIN: custom extensions
+wfLoadExtension( 'WikiEditor' );
+wfLoadExtension( 'CodeEditor' );
+wfLoadExtension( 'PdfHandler' );
+wfLoadExtension( 'MultimediaViewer' );
+wfLoadExtension( 'MsUpload' );
+wfLoadExtension( 'VisualEditor' );
+
+$wgEnableUploads = true;
+$wgUseImageMagick = true;
+$wgImageMagickConvertCommand = '/usr/bin/convert';
+$wgFileExtensions[] = 'pdf';
+
+# VisualEditor defaults
+$wgDefaultUserOptions['visualeditor-enable'] = 1;
+$wgDefaultUserOptions['visualeditor-editor'] = 'visualeditor';
+
+# MsUpload: allow registered users to upload
+$wgGroupPermissions['user']['upload'] = true;
+# END: custom extensions
+PHP
+  # Keep webroot in sync
+  cp -f /data/LocalSettings.php LocalSettings.php
+  php maintenance/update.php --quick || true
+fi
+
 # Ensure SMW installed/enabled per env toggle (runs on every start)
 normalize_bool() {
   case "${1:-}" in
@@ -135,6 +166,7 @@ if [ -f /data/LocalSettings.php ]; then
       echo "wfLoadExtension( 'SemanticMediaWiki' );" >> /data/LocalSettings.php
       echo "enableSemantics( parse_url( \$wgServer, PHP_URL_HOST ) );" >> /data/LocalSettings.php
       echo "[init] Enabled SemanticMediaWiki in LocalSettings.php"
+      cp -f /data/LocalSettings.php LocalSettings.php
       php maintenance/update.php --quick || true
     fi
   else
