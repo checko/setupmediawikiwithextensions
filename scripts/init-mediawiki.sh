@@ -199,9 +199,9 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Enabling mkv uploads in LocalSettings.php"
     echo "\$wgFileExtensions[] = 'mkv';" >> /data/LocalSettings.php
   fi
-  if grep -q "^[[:space:]]*\$wgMaxUploadSize[[:space:]]*=" /data/LocalSettings.php; then
+  if grep -q '^[[:space:]]*\$wgMaxUploadSize[[:space:]]*=' /data/LocalSettings.php; then
     echo "[init] Updating MediaWiki max upload size to 1GiB"
-    sed -i -E "s/^[[:space:]]*\$wgMaxUploadSize[[:space:]]*=.*/\$wgMaxUploadSize = 1024 * 1024 * 1024;/" /data/LocalSettings.php
+    sed -i -E 's/^[[:space:]]*\$wgMaxUploadSize[[:space:]]*=.*/$wgMaxUploadSize = 1024 * 1024 * 1024;/' /data/LocalSettings.php
   else
     echo "[init] Setting MediaWiki max upload size to 1GiB"
     echo "\$wgMaxUploadSize = 1024 * 1024 * 1024;" >> /data/LocalSettings.php
