@@ -129,6 +129,10 @@ $wgEnableUploads = true;
 $wgUseImageMagick = true;
 $wgImageMagickConvertCommand = '/usr/bin/convert';
 $wgFileExtensions[] = 'pdf';
+$wgFileExtensions[] = 'mp4';
+
+# Allow larger uploads to match PHP limits
+$wgMaxUploadSize = 512 * 1024 * 1024; // 512M
 
 # VisualEditor defaults
 $wgDefaultUserOptions['visualeditor-enable'] = 1;
@@ -177,6 +181,19 @@ if [ -f /data/LocalSettings.php ]; then
       sed -i -E "s/^(\s*)enableSemantics\(.*\);/# \0/" /data/LocalSettings.php || true
     fi
   fi
+fi
+
+# Ensure mp4 is allowed and upload size is set even if the custom block already existed
+if [ -f /data/LocalSettings.php ]; then
+  if ! grep -q "\$wgFileExtensions\[\]\s*=\s*'mp4'" /data/LocalSettings.php; then
+    echo "[init] Enabling mp4 uploads in LocalSettings.php"
+    echo "\$wgFileExtensions[] = 'mp4';" >> /data/LocalSettings.php
+  fi
+  if ! grep -q "\$wgMaxUploadSize" /data/LocalSettings.php; then
+    echo "[init] Setting MediaWiki max upload size to 512M"
+    echo "\$wgMaxUploadSize = 512 * 1024 * 1024;" >> /data/LocalSettings.php
+  fi
+  cp -f /data/LocalSettings.php LocalSettings.php
 fi
 
 echo "[init] Starting Apache..."
