@@ -130,9 +130,11 @@ $wgUseImageMagick = true;
 $wgImageMagickConvertCommand = '/usr/bin/convert';
 $wgFileExtensions[] = 'pdf';
 $wgFileExtensions[] = 'mp4';
+$wgFileExtensions[] = 'avi';
+$wgFileExtensions[] = 'mkv';
 
 # Allow larger uploads to match PHP limits
-$wgMaxUploadSize = 512 * 1024 * 1024; // 512M
+$wgMaxUploadSize = 1024 * 1024 * 1024; // 1 GiB
 
 # VisualEditor defaults
 $wgDefaultUserOptions['visualeditor-enable'] = 1;
@@ -189,9 +191,20 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Enabling mp4 uploads in LocalSettings.php"
     echo "\$wgFileExtensions[] = 'mp4';" >> /data/LocalSettings.php
   fi
-  if ! grep -q "\$wgMaxUploadSize" /data/LocalSettings.php; then
-    echo "[init] Setting MediaWiki max upload size to 512M"
-    echo "\$wgMaxUploadSize = 512 * 1024 * 1024;" >> /data/LocalSettings.php
+  if ! grep -q "\$wgFileExtensions\[\]\s*=\s*'avi'" /data/LocalSettings.php; then
+    echo "[init] Enabling avi uploads in LocalSettings.php"
+    echo "\$wgFileExtensions[] = 'avi';" >> /data/LocalSettings.php
+  fi
+  if ! grep -q "\$wgFileExtensions\[\]\s*=\s*'mkv'" /data/LocalSettings.php; then
+    echo "[init] Enabling mkv uploads in LocalSettings.php"
+    echo "\$wgFileExtensions[] = 'mkv';" >> /data/LocalSettings.php
+  fi
+  if grep -q "^\s*\$wgMaxUploadSize\s*=" /data/LocalSettings.php; then
+    echo "[init] Updating MediaWiki max upload size to 1GiB"
+    sed -i -E "s/^\s*\$wgMaxUploadSize\s*=.*/\$wgMaxUploadSize = 1024 * 1024 * 1024;/" /data/LocalSettings.php
+  else
+    echo "[init] Setting MediaWiki max upload size to 1GiB"
+    echo "\$wgMaxUploadSize = 1024 * 1024 * 1024;" >> /data/LocalSettings.php
   fi
   cp -f /data/LocalSettings.php LocalSettings.php
 fi
