@@ -233,5 +233,12 @@ if [ -f /data/LocalSettings.php ]; then
   cp -f /data/LocalSettings.php LocalSettings.php
 fi
 
+# Final enforcement for TMH MP4 uploads flag
+if [ -f /data/LocalSettings.php ] && ! grep -q "\$wgTmhEnableMp4Uploads" /data/LocalSettings.php; then
+  echo "[init] Allowing MP4 uploads via TMH (final enforcement)"
+  echo "\$wgTmhEnableMp4Uploads = true;" >> /data/LocalSettings.php
+  cp -f /data/LocalSettings.php LocalSettings.php
+fi
+
 echo "[init] Starting Apache..."
 exec apache2-foreground
