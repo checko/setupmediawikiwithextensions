@@ -231,6 +231,11 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Disabling TMH transcode by default"
     echo "\$wgTmhEnableTranscode = false;" >> /data/LocalSettings.php
   fi
+  # Ensure getID3 is required for TMH metadata parsing
+  if ! grep -q "getid3/getid3/getid3.php" /data/LocalSettings.php; then
+    echo "[init] Requiring getID3 library in LocalSettings.php"
+    echo "require_once __DIR__ . '/vendor/getid3/getid3/getid3/getid3.php';" >> /data/LocalSettings.php
+  fi
   if grep -q '^[[:space:]]*\$wgMaxUploadSize[[:space:]]*=' /data/LocalSettings.php; then
     echo "[init] Updating MediaWiki max upload size to 1GiB"
     sed -i -E 's/^[[:space:]]*\$wgMaxUploadSize[[:space:]]*=.*/$wgMaxUploadSize = 1024 * 1024 * 1024;/' /data/LocalSettings.php
