@@ -45,6 +45,13 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
   - `MW_SITE_SERVER` (e.g., `http://localhost:9090`)
 - To change port, edit `docker-compose.yml` port mapping.
 
+### Important: Do not edit `./data/*` directly
+- The file `./data/LocalSettings.php` is persisted output and managed by the init script.
+- Make configuration changes in `scripts/init-mediawiki.sh` (source of truth) and/or `.env`, then rebuild/recreate:
+  - `docker compose up -d --build --force-recreate`
+- The init script will enforce config (extensions, upload types/sizes, TMH, etc.) and sync the webroot copy of `LocalSettings.php`.
+- Rationale: editing `./data/LocalSettings.php` manually can be overwritten or drift from the intended, versioned configuration.
+
 ## Installed Extensions
 - MsUpload, WikiEditor, MultimediaViewer, PdfHandler, VisualEditor, CodeEditor
 - SemanticMediaWiki (`mediawiki/semantic-media-wiki ~4.1` via Composer)
