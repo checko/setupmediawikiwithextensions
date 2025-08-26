@@ -86,6 +86,7 @@ wfLoadExtension( 'PdfHandler' );
 wfLoadExtension( 'MultimediaViewer' );
 wfLoadExtension( 'MsUpload' );
 wfLoadExtension( 'VisualEditor' );
+wfLoadExtension( 'TimedMediaHandler' );
 
 $wgEnableUploads = true;
 $wgUseImageMagick = true;
@@ -98,6 +99,10 @@ $wgDefaultUserOptions['visualeditor-editor'] = 'visualeditor';
 
 # MsUpload: allow registered users to upload
 $wgGroupPermissions['user']['upload'] = true;
+
+# TimedMediaHandler config (basic playback, no transcode by default)
+$wgFFmpegLocation = '/usr/bin/ffmpeg';
+$wgTmhEnableTranscode = false;
 # END: custom extensions
 PHP
   fi
@@ -124,6 +129,7 @@ wfLoadExtension( 'PdfHandler' );
 wfLoadExtension( 'MultimediaViewer' );
 wfLoadExtension( 'MsUpload' );
 wfLoadExtension( 'VisualEditor' );
+wfLoadExtension( 'TimedMediaHandler' );
 
 $wgEnableUploads = true;
 $wgUseImageMagick = true;
@@ -142,6 +148,9 @@ $wgDefaultUserOptions['visualeditor-editor'] = 'visualeditor';
 
 # MsUpload: allow registered users to upload
 $wgGroupPermissions['user']['upload'] = true;
+# TimedMediaHandler config (basic playback, no transcode by default)
+$wgFFmpegLocation = '/usr/bin/ffmpeg';
+$wgTmhEnableTranscode = false;
 # END: custom extensions
 PHP
   # Keep webroot in sync
