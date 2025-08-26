@@ -6,6 +6,7 @@ RUN apt-get update \
         git curl unzip \
         mariadb-client \
         imagemagick ghostscript poppler-utils \
+        php-getid3 \
         ffmpeg \
         ca-certificates \
         less vim-tiny \
