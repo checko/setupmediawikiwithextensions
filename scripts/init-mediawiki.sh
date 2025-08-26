@@ -103,6 +103,7 @@ $wgGroupPermissions['user']['upload'] = true;
 # TimedMediaHandler config (basic playback, no transcode by default)
 $wgFFmpegLocation = '/usr/bin/ffmpeg';
 $wgTmhEnableTranscode = false;
+$wgTmhEnableMp4Uploads = true;
 # END: custom extensions
 PHP
   fi
@@ -151,6 +152,7 @@ $wgGroupPermissions['user']['upload'] = true;
 # TimedMediaHandler config (basic playback, no transcode by default)
 $wgFFmpegLocation = '/usr/bin/ffmpeg';
 $wgTmhEnableTranscode = false;
+$wgTmhEnableMp4Uploads = true;
 # END: custom extensions
 PHP
   # Keep webroot in sync
