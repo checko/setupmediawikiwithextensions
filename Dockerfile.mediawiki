@@ -34,8 +34,14 @@ RUN set -eux; \
 
 # Note: Semantic MediaWiki will be installed at runtime via composer inside the container
 
-# Install getID3 via Composer for TimedMediaHandler metadata support
-RUN composer --no-interaction --no-progress require 'james-heinrich/getid3:^2.0'
+# Install getID3 library (vendor) for TimedMediaHandler metadata support
+RUN set -eux; \
+    GETID3_VER=v1.9.23; \
+    curl -fsSL -o /tmp/getid3.zip "https://github.com/JamesHeinrich/getID3/archive/refs/tags/${GETID3_VER}.zip"; \
+    mkdir -p /var/www/html/vendor/getid3; \
+    unzip -q /tmp/getid3.zip -d /tmp; \
+    mv /tmp/getID3-1.9.23 /var/www/html/vendor/getid3/getid3; \
+    rm -f /tmp/getid3.zip
 
 # Init/entry script to auto-install MW and enable extensions
 COPY scripts/init-mediawiki.sh /usr/local/bin/init-mediawiki.sh
