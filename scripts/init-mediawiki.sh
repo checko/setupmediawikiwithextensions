@@ -208,6 +208,19 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Enabling mkv uploads in LocalSettings.php"
     echo "\$wgFileExtensions[] = 'mkv';" >> /data/LocalSettings.php
   fi
+  # Ensure TimedMediaHandler is enabled and ffmpeg configured
+  if ! grep -q "TimedMediaHandler" /data/LocalSettings.php; then
+    echo "[init] Enabling TimedMediaHandler in LocalSettings.php"
+    echo "wfLoadExtension( 'TimedMediaHandler' );" >> /data/LocalSettings.php
+  fi
+  if ! grep -q "\$wgFFmpegLocation" /data/LocalSettings.php; then
+    echo "[init] Setting ffmpeg path for TMH"
+    echo "\$wgFFmpegLocation = '/usr/bin/ffmpeg';" >> /data/LocalSettings.php
+  fi
+  if ! grep -q "\$wgTmhEnableTranscode" /data/LocalSettings.php; then
+    echo "[init] Disabling TMH transcode by default"
+    echo "\$wgTmhEnableTranscode = false;" >> /data/LocalSettings.php
+  fi
   if grep -q '^[[:space:]]*\$wgMaxUploadSize[[:space:]]*=' /data/LocalSettings.php; then
     echo "[init] Updating MediaWiki max upload size to 1GiB"
     sed -i -E 's/^[[:space:]]*\$wgMaxUploadSize[[:space:]]*=.*/$wgMaxUploadSize = 1024 * 1024 * 1024;/' /data/LocalSettings.php
