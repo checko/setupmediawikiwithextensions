@@ -105,8 +105,8 @@ $wgFFmpegLocation = '/usr/bin/ffmpeg';
 $wgTmhEnableTranscode = false;
 $wgTmhEnableMp4Uploads = true;
 # Ensure getID3 library is available for media metadata
-if ( file_exists( __DIR__ . '/vendor/getid3/getid3/getid3.php' ) ) {
-    require_once __DIR__ . '/vendor/getid3/getid3/getid3.php';
+if ( file_exists( __DIR__ . '/vendor/getid3/getid3/getid3/getid3.php' ) ) {
+    require_once __DIR__ . '/vendor/getid3/getid3/getid3/getid3.php';
 }
 # END: custom extensions
 PHP
@@ -158,8 +158,8 @@ $wgFFmpegLocation = '/usr/bin/ffmpeg';
 $wgTmhEnableTranscode = false;
 $wgTmhEnableMp4Uploads = true;
 # Ensure getID3 library is available for media metadata
-if ( file_exists( __DIR__ . '/vendor/getid3/getid3/getid3.php' ) ) {
-    require_once __DIR__ . '/vendor/getid3/getid3/getid3.php';
+if ( file_exists( __DIR__ . '/vendor/getid3/getid3/getid3/getid3.php' ) ) {
+    require_once __DIR__ . '/vendor/getid3/getid3/getid3/getid3.php';
 }
 # END: custom extensions
 PHP
