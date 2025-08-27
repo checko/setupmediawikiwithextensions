@@ -105,8 +105,8 @@ $wgFFmpegLocation = '/usr/bin/ffmpeg';
 $wgTmhEnableTranscode = false;
 $wgTmhEnableMp4Uploads = true;
 # Ensure getID3 library is available for media metadata
-if ( file_exists( __DIR__ . '/vendor/getid3/getid3/getid3/getid3.php' ) ) {
-    require_once __DIR__ . '/vendor/getid3/getid3/getid3/getid3.php';
+if ( file_exists( __DIR__ . '/vendor/getid3/getid3/getid3.php' ) ) {
+    require_once __DIR__ . '/vendor/getid3/getid3/getid3.php';
 }
 # END: custom extensions
 PHP
@@ -158,8 +158,8 @@ $wgFFmpegLocation = '/usr/bin/ffmpeg';
 $wgTmhEnableTranscode = false;
 $wgTmhEnableMp4Uploads = true;
 # Ensure getID3 library is available for media metadata
-if ( file_exists( __DIR__ . '/vendor/getid3/getid3/getid3/getid3.php' ) ) {
-    require_once __DIR__ . '/vendor/getid3/getid3/getid3/getid3.php';
+if ( file_exists( __DIR__ . '/vendor/getid3/getid3/getid3.php' ) ) {
+    require_once __DIR__ . '/vendor/getid3/getid3/getid3.php';
 }
 # END: custom extensions
 PHP
@@ -231,10 +231,15 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Disabling TMH transcode by default"
     echo "\$wgTmhEnableTranscode = false;" >> /data/LocalSettings.php
   fi
-  # Ensure getID3 is required for TMH metadata parsing
-  if ! grep -q "getid3/getid3/getid3.php" /data/LocalSettings.php; then
+  # Ensure getID3 is required for TMH metadata parsing (normalize path)
+  # Replace any legacy deep path first, then ensure the normalized one exists
+  if grep -q "vendor/getid3/getid3/getid3/getid3.php" /data/LocalSettings.php; then
+    echo "[init] Normalizing getID3 require path in LocalSettings.php"
+    sed -i "s#vendor/getid3/getid3/getid3/getid3.php#vendor/getid3/getid3/getid3.php#g" /data/LocalSettings.php
+  fi
+  if ! grep -q "vendor/getid3/getid3/getid3.php" /data/LocalSettings.php; then
     echo "[init] Requiring getID3 library in LocalSettings.php"
-    echo "require_once __DIR__ . '/vendor/getid3/getid3/getid3/getid3.php';" >> /data/LocalSettings.php
+    echo "require_once __DIR__ . '/vendor/getid3/getid3/getid3.php';" >> /data/LocalSettings.php
   fi
   if grep -q '^[[:space:]]*\$wgMaxUploadSize[[:space:]]*=' /data/LocalSettings.php; then
     echo "[init] Updating MediaWiki max upload size to 1GiB"

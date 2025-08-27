@@ -40,7 +40,8 @@ RUN set -eux; \
     curl -fsSL -o /tmp/getid3.zip "https://github.com/JamesHeinrich/getID3/archive/refs/tags/${GETID3_VER}.zip"; \
     mkdir -p /var/www/html/vendor/getid3; \
     unzip -q /tmp/getid3.zip -d /tmp; \
-    mv /tmp/getID3-1.9.23 /var/www/html/vendor/getid3/getid3; \
+    # Normalize install path to /var/www/html/vendor/getid3/getid3
+    mv /tmp/getID3-1.9.23/getid3 /var/www/html/vendor/getid3/getid3; \
     rm -f /tmp/getid3.zip
 
 # Init/entry script to auto-install MW and enable extensions
