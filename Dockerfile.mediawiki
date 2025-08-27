@@ -44,7 +44,8 @@ RUN set -eux; \
 # Install WikiMarkdown PHP dependencies
 RUN set -eux; \
     cd /var/www/html/extensions/WikiMarkdown; \
-    composer install --no-dev --no-interaction --no-progress || composer update --no-dev --no-interaction --no-progress
+    composer install --no-dev --no-interaction --no-progress --no-scripts --ignore-platform-reqs \
+      || composer update --no-dev --no-interaction --no-progress --no-scripts --ignore-platform-reqs
 
 # Note: Semantic MediaWiki will be installed at runtime via composer inside the container
 
