@@ -90,6 +90,7 @@ wfLoadExtension( 'MultimediaViewer' );
 wfLoadExtension( 'MsUpload' );
 wfLoadExtension( 'VisualEditor' );
 wfLoadExtension( 'TimedMediaHandler' );
+wfLoadExtension( 'SyntaxHighlight' );
 
 $wgEnableUploads = true;
 $wgUseImageMagick = true;
@@ -138,6 +139,7 @@ wfLoadExtension( 'MultimediaViewer' );
 wfLoadExtension( 'MsUpload' );
 wfLoadExtension( 'VisualEditor' );
 wfLoadExtension( 'TimedMediaHandler' );
+wfLoadExtension( 'SyntaxHighlight' );
 
 $wgEnableUploads = true;
 $wgUseImageMagick = true;
@@ -225,6 +227,11 @@ if [ -f /data/LocalSettings.php ]; then
   if ! grep -q "TimedMediaHandler" /data/LocalSettings.php; then
     echo "[init] Enabling TimedMediaHandler in LocalSettings.php"
     echo "wfLoadExtension( 'TimedMediaHandler' );" >> /data/LocalSettings.php
+  fi
+  # Ensure SyntaxHighlight is enabled
+  if ! grep -q "SyntaxHighlight" /data/LocalSettings.php; then
+    echo "[init] Enabling SyntaxHighlight in LocalSettings.php"
+    echo "wfLoadExtension( 'SyntaxHighlight' );" >> /data/LocalSettings.php
   fi
   if ! grep -q "\$wgFFmpegLocation" /data/LocalSettings.php; then
     echo "[init] Setting ffmpeg path for TMH"

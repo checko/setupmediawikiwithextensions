@@ -4,6 +4,7 @@ FROM mediawiki:1.41
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         git curl unzip \
+        python3 python3-pygments \
         mariadb-client \
         imagemagick ghostscript poppler-utils \
         librsvg2-bin \
@@ -22,7 +23,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 WORKDIR /var/www/html
 
-# Fetch MsUpload (others are bundled with the MediaWiki image tarball)
+# Fetch MsUpload, TimedMediaHandler, SyntaxHighlight (others are bundled with the MediaWiki image tarball)
 RUN set -eux; \
     EXT_DIR=/var/www/html/extensions; \
     mkdir -p "$EXT_DIR"; \
@@ -31,6 +32,9 @@ RUN set -eux; \
     fi; \
     if [ ! -d "$EXT_DIR/TimedMediaHandler" ]; then \
       git clone --depth 1 -b REL1_41 https://github.com/wikimedia/mediawiki-extensions-TimedMediaHandler "$EXT_DIR/TimedMediaHandler"; \
+    fi; \
+    if [ ! -d "$EXT_DIR/SyntaxHighlight_GeSHi" ]; then \
+      git clone --depth 1 -b REL1_41 https://github.com/wikimedia/mediawiki-extensions-SyntaxHighlight_GeSHi "$EXT_DIR/SyntaxHighlight_GeSHi"; \
     fi;
 
 # Note: Semantic MediaWiki will be installed at runtime via composer inside the container

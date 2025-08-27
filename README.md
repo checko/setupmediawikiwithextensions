@@ -58,6 +58,7 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 
 ## Installed Extensions
 - MsUpload, WikiEditor, MultimediaViewer, PdfHandler, VisualEditor, CodeEditor
+- SyntaxHighlight (with Pygments for code blocks)
 - SemanticMediaWiki (`mediawiki/semantic-media-wiki ~4.1` via Composer)
 
 ## Maintenance
