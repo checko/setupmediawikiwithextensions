@@ -7,7 +7,7 @@
   function ensureMermaid(cb){
     if (window.mermaid){ cb(); return; }
     var s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/mermaid@9.4.3/dist/mermaid.min.js';
+    s.src='https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js';
     s.onload=function(){ cb(); };
     s.onerror=function(){ console.error('[Mermaid] failed to load library'); };
     document.head.appendChild(s);
