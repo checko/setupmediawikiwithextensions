@@ -231,6 +231,15 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Enabling TimedMediaHandler in LocalSettings.php"
     echo "wfLoadExtension( 'TimedMediaHandler' );" >> /data/LocalSettings.php
   fi
+  # Ensure Parsoid REST API (for VisualEditor) is enabled
+  if ! grep -q "wfLoadExtension( 'Parsoid' );" /data/LocalSettings.php; then
+    echo "[init] Enabling Parsoid extension (REST API)"
+    echo "wfLoadExtension( 'Parsoid' );" >> /data/LocalSettings.php
+  fi
+  # Ensure canonical server is set (keeps REST domain consistent)
+  if ! grep -q "^\$wgCanonicalServer\b" /data/LocalSettings.php; then
+    echo "\$wgCanonicalServer = \$wgServer;" >> /data/LocalSettings.php
+  fi
   # Ensure Mermaid is enabled
   if ! grep -q "wfLoadExtension( 'Mermaid' );" /data/LocalSettings.php; then
     echo "[init] Enabling Mermaid extension"
