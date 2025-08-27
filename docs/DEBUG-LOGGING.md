@@ -1,31 +1,37 @@
-# MediaWiki Debug Logging (How-To)
+# Debug Log — Mermaid Rendering
 
-This wiki can enable verbose exception details and a debug log file to help troubleshoot errors. Use these settings temporarily, then disable them when finished.
+Date: 2025-08-27 to 2025-08-28
+Branch: `settings-update`
 
-## Enable (temporary)
-Add these lines to `LocalSettings.php` (near the end is fine):
+## Symptoms
+- Mermaid diagrams not rendering; console shows minifier syntax errors (e.g., “Illegal newline after throw”) when `ext.mermaid` is served through ResourceLoader.
+- Timeline/mindmap reported “Syntax error in graph” on v9 builds.
+- Later, mindmap parsed as multiple roots when blocks were indented by list bullets.
 
-```php
-// DEBUG (temporary)
-$wgShowExceptionDetails = true;                  // Show full exception details in browser
-$wgLogExceptionBacktrace = true;                 // Include backtraces in logs
-$wgDebugLogFile = "/tmp/wiki-debug.log";        // Write logs to a file in the container
-```
+## Root Causes
+- Upstream Mermaid v6 extension ships modern JS that can trip RL minification.
+- Mermaid v9 didn’t support timeline/mindmap; v10 required.
+- Placing Mermaid blocks inside list items alters indentation; mindmap needs a single root and strict indentation.
 
-Notes:
-- These settings are intended for troubleshooting. Do not keep them enabled in production.
-- The log file path is inside the container; view with:
-  - `docker compose exec mediawiki tail -f /tmp/wiki-debug.log`
+## Fixes Applied
+1. Keep RL module small; load Mermaid JS separately:
+   - RL `ext.mermaid` now serves only an initializer file.
+   - Vendored Mermaid v10.9.1 at `/extensions/Mermaid/resources/mermaid.min.js` to avoid CDN dependence.
+2. Initializer (`patches/ext.mermaid.init.js`):
+   - Defers init (`startOnLoad: false`) and runs after MediaWiki hook.
+   - Uses `mermaid.run()` (v10) on a `.mermaid` child node; falls back to `render()` when needed.
+   - Adds render locks (`data-mermaid-status`) and cleans prior child graph nodes to prevent duplicates.
+3. Docs updated:
+   - README/extension-checks include v10 diagrams and mindmap/timeline examples.
+   - Tips: start blocks at column 1; avoid list bullets; mindmap must have exactly one root.
+4. Optional debug: `MW_RL_DEBUG=1` to disable JS minification if needed.
 
-## Disable
-Comment or remove the three lines above, then reload the page or restart the container.
+## Verification
+- Flowchart, sequence, class, state diagrams render.
+- Timeline renders with v10 runner.
+- Mindmap renders when blocks start at column 1 with single root.
 
-```php
-// $wgShowExceptionDetails = true;
-// $wgLogExceptionBacktrace = true;
-// $wgDebugLogFile = "/tmp/wiki-debug.log";
-```
+## Known Notes
+- If CDN must be used instead of vendored JS, switch initializer source to the CDN URL.
+- Some older browsers may require additional polyfills for v10 runner; standard modern browsers are OK.
 
-## Tips
-- After enabling logging, reproduce the error and immediately fetch recent log entries.
-- Remember to turn these off to reduce noise and avoid leaking sensitive details.

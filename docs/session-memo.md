@@ -19,6 +19,10 @@ Remote: `origin/settings-update`
 - Mermaid:
   - Added `Mermaid` extension; theme via `.env` `MW_MERMAID_THEME` (default `forest`).
   - README: Added usage docs.
+  - Client loader reworked to avoid RL minifier issues and support v10 diagrams:
+    - RL module serves only an initializer; Mermaid v10.9.1 is vendored locally at `/extensions/Mermaid/resources/mermaid.min.js`.
+    - Initializer uses `mermaid.run()` (v10) with delayed init and render locks to prevent duplicates.
+    - Documented indentation rules (start at column 1; mindmap requires a single root) and list-bullet pitfalls.
 - VisualEditor / Parsoid:
   - Enabled Parsoid from vendor path: `wfLoadExtension('Parsoid', "$IP/vendor/wikimedia/parsoid/extension.json");`
   - Set `$wgCanonicalServer = $wgServer;` to keep REST “domain” consistent.

@@ -70,9 +70,38 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 - Parsedown/Extra/Extended dependencies are bundled in the image; no extra steps needed.
 
 ### Mermaid Usage
-- Use parser function with Mermaid syntax:
-  `{{#mermaid:graph TD; A-->B; B-->C;}}`
-- Theme via `.env`: `MW_MERMAID_THEME` (forest/default/neutral/dark).
+- Basic: `{{#mermaid:graph TD; A-->B; B-->C;}}`
+- Theme via `.env`: `MW_MERMAID_THEME` (forest/default/neutral/dark)
+- v10 diagrams supported (timeline, mindmap, sankey, xychart). The image bundles Mermaid v10.9.1 locally and uses an initializer that avoids RL minification issues.
+- Mindmap/timeline tips:
+  - Start Mermaid blocks at column 1 (no list bullets or extra indentation).
+  - For mindmap, include a single `mindmap` header line, then exactly one root node indented beneath it, then children indented further. Use spaces, not tabs.
+  - Example mindmap:
+    
+    `{{#mermaid:
+    mindmap
+      Roadmap((Roadmap))
+        Backend
+          API v1
+          DB Migrations
+        Frontend
+          Components
+          Theming
+        Ops
+          Monitoring
+          Backups
+    }}`
+  - Example timeline:
+    
+    `{{#mermaid:
+    timeline
+      title Product Timeline
+      2025-08-01 : Kickoff
+      2025-08-07 : API Draft
+      2025-08-15 : Frontend Alpha
+      2025-08-22 : Beta
+      2025-09-01 : Release
+    }}`
 
 ## Maintenance
 - Run MediaWiki update (schema changes, extension updates):
@@ -92,6 +121,10 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 - DB not ready on first start: the web container waits for DB; if stuck, check `docker compose logs db`.
 - "File with dimensions greater than 12.5 MP": increase `MW_MAX_IMAGE_AREA` in `.env` (e.g., `100000000` for 100 MP). Larger values consume more CPU/RAM during thumb generation.
 - SVG quality/performance: prefers `rsvg` when available. Verify at Special:Version → Image manipulation. Increase `MW_SVG_MAX_SIZE` if thumbs are too small.
+- Mermaid not rendering / double render:
+  - Ensure blocks aren’t nested inside list items (leading `-`). This changes indentation and breaks mindmap parsing.
+  - Hard refresh to clear cached modules. The initializer prevents double renders and loads Mermaid locally from `/extensions/Mermaid/resources/mermaid.min.js`.
+  - See `docs/DEBUG-LOGGING.md` for the mermaid debugging log and fixes applied.
 
 ## Verifying Extensions
 See `docs/extension-checks.md` for quick ways to verify each extension is enabled and working.
