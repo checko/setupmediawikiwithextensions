@@ -288,7 +288,7 @@ if [ -f /data/LocalSettings.php ]; then
   fi
   if [ "$WANT_CONVERTER" = "rsvg" ] || [ "$WANT_CONVERTER" = "ImageMagick" ] || [ "$WANT_CONVERTER" = "inkscape" ]; then
     if grep -q '^[[:space:]]*\$wgSVGConverter[[:space:]]*=' /data/LocalSettings.php; then
-      sed -i -E 's/^[[:space:]]*\$wgSVGConverter[[:space:]]*=.*/$wgSVGConverter = '\''"${WANT_CONVERTER}"'\'';/' /data/LocalSettings.php
+      sed -i -E "s/^[[:space:]]*\\$wgSVGConverter[[:space:]]*=.*/\\$wgSVGConverter = '${WANT_CONVERTER}';/" /data/LocalSettings.php
     else
       echo "\$wgSVGConverter = '${WANT_CONVERTER}';" >> /data/LocalSettings.php
     fi
