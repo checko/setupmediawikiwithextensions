@@ -58,6 +58,9 @@ PY
 RUN set -eux; \
     cd /var/www/html/extensions/Mermaid; \
     cp -f /tmp/ext.mermaid.init.js resources/ext.mermaid.js
+RUN set -eux; \
+    cd /var/www/html/extensions/Mermaid/resources; \
+    curl -fsSL -o mermaid.min.js 'https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js'
 
 # Install WikiMarkdown PHP dependencies
 RUN set -eux; \
