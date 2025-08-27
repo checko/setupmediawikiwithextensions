@@ -8,6 +8,7 @@ RUN apt-get update \
         mariadb-client \
         imagemagick ghostscript poppler-utils \
         librsvg2-bin \
+        fonts-noto-cjk fonts-noto-color-emoji fonts-arphic-uming fonts-arphic-ukai \
         ffmpeg \
         ca-certificates \
         less vim-tiny \
