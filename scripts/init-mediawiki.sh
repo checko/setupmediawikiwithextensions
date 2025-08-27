@@ -230,6 +230,11 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Enabling TimedMediaHandler in LocalSettings.php"
     echo "wfLoadExtension( 'TimedMediaHandler' );" >> /data/LocalSettings.php
   fi
+  # Ensure WikiMarkdown is enabled
+  if ! grep -q "WikiMarkdown" /data/LocalSettings.php; then
+    echo "[init] Enabling WikiMarkdown in LocalSettings.php"
+    echo "wfLoadExtension( 'WikiMarkdown' );" >> /data/LocalSettings.php
+  fi
   # Ensure SyntaxHighlight is enabled (use correct key matching directory)
   if grep -q "wfLoadExtension( 'SyntaxHighlight' )" /data/LocalSettings.php && ! grep -q "SyntaxHighlight_GeSHi" /data/LocalSettings.php; then
     echo "[init] Normalizing SyntaxHighlight load key to SyntaxHighlight_GeSHi"
