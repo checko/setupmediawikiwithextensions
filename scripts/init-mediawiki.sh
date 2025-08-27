@@ -254,7 +254,7 @@ if [ -f /data/LocalSettings.php ]; then
   # Ensure larger thumbnails for big images: set $wgMaxImageArea (default 100 MP)
   if grep -q '^[[:space:]]*\$wgMaxImageArea[[:space:]]*=' /data/LocalSettings.php; then
     echo "[init] Setting wgMaxImageArea to ${MW_MAX_IMAGE_AREA}"
-    sed -i -E "s/^[[:space:]]*\\$wgMaxImageArea[[:space:]]*=.*/\\$wgMaxImageArea = ${MW_MAX_IMAGE_AREA};/" /data/LocalSettings.php
+    sed -i -E 's/^[[:space:]]*\$wgMaxImageArea[[:space:]]*=.*/$wgMaxImageArea = '"${MW_MAX_IMAGE_AREA}"';/' /data/LocalSettings.php
   else
     echo "[init] Adding wgMaxImageArea = ${MW_MAX_IMAGE_AREA}"
     echo "\$wgMaxImageArea = ${MW_MAX_IMAGE_AREA};" >> /data/LocalSettings.php
@@ -266,7 +266,7 @@ if [ -f /data/LocalSettings.php ]; then
   fi
   # Configure SVG rendering size and converter
   if grep -q '^[[:space:]]*\$wgSVGMaxSize[[:space:]]*=' /data/LocalSettings.php; then
-    sed -i -E "s/^[[:space:]]*\\$wgSVGMaxSize[[:space:]]*=.*/\\$wgSVGMaxSize = ${MW_SVG_MAX_SIZE};/" /data/LocalSettings.php
+    sed -i -E 's/^[[:space:]]*\$wgSVGMaxSize[[:space:]]*=.*/$wgSVGMaxSize = '"${MW_SVG_MAX_SIZE}"';/' /data/LocalSettings.php
   else
     echo "\$wgSVGMaxSize = ${MW_SVG_MAX_SIZE};" >> /data/LocalSettings.php
   fi
@@ -277,7 +277,7 @@ if [ -f /data/LocalSettings.php ]; then
   fi
   if [ "$WANT_CONVERTER" = "rsvg" ] || [ "$WANT_CONVERTER" = "ImageMagick" ] || [ "$WANT_CONVERTER" = "inkscape" ]; then
     if grep -q '^[[:space:]]*\$wgSVGConverter[[:space:]]*=' /data/LocalSettings.php; then
-      sed -i -E "s/^[[:space:]]*\\$wgSVGConverter[[:space:]]*=.*/\\$wgSVGConverter = '${WANT_CONVERTER}';/" /data/LocalSettings.php
+      sed -i -E 's/^[[:space:]]*\$wgSVGConverter[[:space:]]*=.*/$wgSVGConverter = '\''"${WANT_CONVERTER}"'\'';/' /data/LocalSettings.php
     else
       echo "\$wgSVGConverter = '${WANT_CONVERTER}';" >> /data/LocalSettings.php
     fi
