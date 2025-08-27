@@ -90,7 +90,7 @@ wfLoadExtension( 'MultimediaViewer' );
 wfLoadExtension( 'MsUpload' );
 wfLoadExtension( 'VisualEditor' );
 wfLoadExtension( 'TimedMediaHandler' );
-wfLoadExtension( 'SyntaxHighlight' );
+wfLoadExtension( 'SyntaxHighlight_GeSHi' );
 
 $wgEnableUploads = true;
 $wgUseImageMagick = true;
@@ -139,7 +139,7 @@ wfLoadExtension( 'MultimediaViewer' );
 wfLoadExtension( 'MsUpload' );
 wfLoadExtension( 'VisualEditor' );
 wfLoadExtension( 'TimedMediaHandler' );
-wfLoadExtension( 'SyntaxHighlight' );
+wfLoadExtension( 'SyntaxHighlight_GeSHi' );
 
 $wgEnableUploads = true;
 $wgUseImageMagick = true;
@@ -228,10 +228,14 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Enabling TimedMediaHandler in LocalSettings.php"
     echo "wfLoadExtension( 'TimedMediaHandler' );" >> /data/LocalSettings.php
   fi
-  # Ensure SyntaxHighlight is enabled
-  if ! grep -q "SyntaxHighlight" /data/LocalSettings.php; then
+  # Ensure SyntaxHighlight is enabled (use correct key matching directory)
+  if grep -q "wfLoadExtension( 'SyntaxHighlight' )" /data/LocalSettings.php && ! grep -q "SyntaxHighlight_GeSHi" /data/LocalSettings.php; then
+    echo "[init] Normalizing SyntaxHighlight load key to SyntaxHighlight_GeSHi"
+    sed -i "s/wfLoadExtension( 'SyntaxHighlight' );/wfLoadExtension( 'SyntaxHighlight_GeSHi' );/" /data/LocalSettings.php
+  fi
+  if ! grep -q "SyntaxHighlight_GeSHi" /data/LocalSettings.php; then
     echo "[init] Enabling SyntaxHighlight in LocalSettings.php"
-    echo "wfLoadExtension( 'SyntaxHighlight' );" >> /data/LocalSettings.php
+    echo "wfLoadExtension( 'SyntaxHighlight_GeSHi' );" >> /data/LocalSettings.php
   fi
   if ! grep -q "\$wgFFmpegLocation" /data/LocalSettings.php; then
     echo "[init] Setting ffmpeg path for TMH"
