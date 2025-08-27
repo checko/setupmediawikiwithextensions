@@ -233,7 +233,18 @@ if [ -f /data/LocalSettings.php ]; then
   # Ensure WikiMarkdown is enabled
   if ! grep -q "WikiMarkdown" /data/LocalSettings.php; then
     echo "[init] Enabling WikiMarkdown in LocalSettings.php"
+    # Ensure WikiMarkdown composer autoload is required before loading the extension
+    if ! grep -q "extensions/WikiMarkdown/vendor/autoload.php" /data/LocalSettings.php; then
+      echo "require_once __DIR__ . '/extensions/WikiMarkdown/vendor/autoload.php';" >> /data/LocalSettings.php
+    fi
     echo "wfLoadExtension( 'WikiMarkdown' );" >> /data/LocalSettings.php
+  fi
+
+  # If WikiMarkdown is already enabled but autoload is missing, insert it just before the load line
+  if grep -q "wfLoadExtension( 'WikiMarkdown' );" /data/LocalSettings.php \
+     && ! grep -q "extensions/WikiMarkdown/vendor/autoload.php" /data/LocalSettings.php; then
+    echo "[init] Inserting WikiMarkdown composer autoload before extension load"
+    sed -i "/wfLoadExtension( 'WikiMarkdown' );/i require_once __DIR__ . '\/extensions\/WikiMarkdown\/vendor\/autoload.php';" /data/LocalSettings.php
   fi
   # Ensure SyntaxHighlight is enabled (use correct key matching directory)
   if grep -q "wfLoadExtension( 'SyntaxHighlight' )" /data/LocalSettings.php && ! grep -q "SyntaxHighlight_GeSHi" /data/LocalSettings.php; then
