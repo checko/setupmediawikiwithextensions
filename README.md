@@ -31,6 +31,7 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 
 ## What’s in the stack
 - `mediawiki` service: custom image based on `mediawiki:1.41`, plus system tools for PdfHandler and Composer. Extensions are cloned/installed during image build.
+  - Includes `librsvg2-bin` for high‑quality SVG rasterization via `rsvg-convert`.
 - `db` service: `mariadb:10.6` with persistent volume.
 - Volumes:
   - Database data in a named volume (`db_data`).
@@ -44,6 +45,8 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
   - `MW_DB_*` (db name/user/pass)
   - `MW_SITE_SERVER` (e.g., `http://localhost:9090`)
   - `MW_MAX_IMAGE_AREA` (max pixels for thumbnailing; raise to avoid "greater than 12.5 MP" errors)
+  - `MW_SVG_MAX_SIZE` (max raster size for SVG thumbnails; default 4096)
+  - `MW_SVG_CONVERTER` (auto | rsvg | ImageMagick | inkscape; default auto)
 - To change port, edit `docker-compose.yml` port mapping.
 
 ### Important: Do not edit `./data/*` directly
@@ -74,6 +77,7 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 - PDF thumbnails/text extract missing: ensure ImageMagick, Ghostscript, Poppler are installed (baked into image). For very large PDFs, resource limits may apply.
 - DB not ready on first start: the web container waits for DB; if stuck, check `docker compose logs db`.
 - "File with dimensions greater than 12.5 MP": increase `MW_MAX_IMAGE_AREA` in `.env` (e.g., `100000000` for 100 MP). Larger values consume more CPU/RAM during thumb generation.
+- SVG quality/performance: prefers `rsvg` when available. Verify at Special:Version → Image manipulation. Increase `MW_SVG_MAX_SIZE` if thumbs are too small.
 
 ## Verifying Extensions
 See `docs/extension-checks.md` for quick ways to verify each extension is enabled and working.

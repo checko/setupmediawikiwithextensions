@@ -17,6 +17,8 @@ cd "${MW_DIR}"
 : "${MW_SITE_SERVER:=http://localhost:9090}"
 : "${MW_ENABLE_SMW:=1}"
 : "${MW_MAX_IMAGE_AREA:=100000000}"
+: "${MW_SVG_MAX_SIZE:=4096}"
+: "${MW_SVG_CONVERTER:=auto}"
 
 echo "[init] Waiting for database at ${MW_DB_HOST}..."
 until mysqladmin ping -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --silent; do
@@ -256,6 +258,29 @@ if [ -f /data/LocalSettings.php ]; then
   else
     echo "[init] Adding wgMaxImageArea = ${MW_MAX_IMAGE_AREA}"
     echo "\$wgMaxImageArea = ${MW_MAX_IMAGE_AREA};" >> /data/LocalSettings.php
+  fi
+  # Allow SVG uploads
+  if ! grep -q "\\$wgFileExtensions\\[\\] = 'svg';" /data/LocalSettings.php; then
+    echo "[init] Enabling SVG uploads"
+    echo "\$wgFileExtensions[] = 'svg';" >> /data/LocalSettings.php
+  fi
+  # Configure SVG rendering size and converter
+  if grep -q '^[[:space:]]*\$wgSVGMaxSize[[:space:]]*=' /data/LocalSettings.php; then
+    sed -i -E "s/^[[:space:]]*\\$wgSVGMaxSize[[:space:]]*=.*/\\$wgSVGMaxSize = ${MW_SVG_MAX_SIZE};/" /data/LocalSettings.php
+  else
+    echo "\$wgSVGMaxSize = ${MW_SVG_MAX_SIZE};" >> /data/LocalSettings.php
+  fi
+  # Decide on converter: prefer rsvg when available or when requested
+  WANT_CONVERTER="${MW_SVG_CONVERTER}"
+  if [ "$WANT_CONVERTER" = "auto" ] && command -v rsvg-convert >/dev/null 2>&1; then
+    WANT_CONVERTER="rsvg"
+  fi
+  if [ "$WANT_CONVERTER" = "rsvg" ] || [ "$WANT_CONVERTER" = "ImageMagick" ] || [ "$WANT_CONVERTER" = "inkscape" ]; then
+    if grep -q '^[[:space:]]*\$wgSVGConverter[[:space:]]*=' /data/LocalSettings.php; then
+      sed -i -E "s/^[[:space:]]*\\$wgSVGConverter[[:space:]]*=.*/\\$wgSVGConverter = '${WANT_CONVERTER}';/" /data/LocalSettings.php
+    else
+      echo "\$wgSVGConverter = '${WANT_CONVERTER}';" >> /data/LocalSettings.php
+    fi
   fi
   cp -f /data/LocalSettings.php LocalSettings.php
 fi
