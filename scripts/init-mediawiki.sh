@@ -91,6 +91,7 @@ wfLoadExtension( 'MsUpload' );
 wfLoadExtension( 'VisualEditor' );
 wfLoadExtension( 'TimedMediaHandler' );
 wfLoadExtension( 'SyntaxHighlight_GeSHi' );
+wfLoadExtension( 'WikiMarkdown' );
 
 $wgEnableUploads = true;
 $wgUseImageMagick = true;
@@ -140,6 +141,7 @@ wfLoadExtension( 'MsUpload' );
 wfLoadExtension( 'VisualEditor' );
 wfLoadExtension( 'TimedMediaHandler' );
 wfLoadExtension( 'SyntaxHighlight_GeSHi' );
+wfLoadExtension( 'WikiMarkdown' );
 
 $wgEnableUploads = true;
 $wgUseImageMagick = true;

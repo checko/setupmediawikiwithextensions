@@ -24,7 +24,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 WORKDIR /var/www/html
 
-# Fetch MsUpload, TimedMediaHandler, SyntaxHighlight (others are bundled with the MediaWiki image tarball)
+# Fetch MsUpload, TimedMediaHandler, SyntaxHighlight, WikiMarkdown (others are bundled with the MediaWiki image tarball)
 RUN set -eux; \
     EXT_DIR=/var/www/html/extensions; \
     mkdir -p "$EXT_DIR"; \
@@ -36,7 +36,15 @@ RUN set -eux; \
     fi; \
     if [ ! -d "$EXT_DIR/SyntaxHighlight_GeSHi" ]; then \
       git clone --depth 1 -b REL1_41 https://github.com/wikimedia/mediawiki-extensions-SyntaxHighlight_GeSHi "$EXT_DIR/SyntaxHighlight_GeSHi"; \
+    fi; \
+    if [ ! -d "$EXT_DIR/WikiMarkdown" ]; then \
+      git clone --depth 1 https://github.com/kuenzign/WikiMarkdown "$EXT_DIR/WikiMarkdown"; \
     fi;
+
+# Install WikiMarkdown PHP dependencies
+RUN set -eux; \
+    cd /var/www/html/extensions/WikiMarkdown; \
+    composer install --no-dev --no-interaction --no-progress || composer update --no-dev --no-interaction --no-progress
 
 # Note: Semantic MediaWiki will be installed at runtime via composer inside the container
 
