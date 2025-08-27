@@ -20,6 +20,7 @@ cd "${MW_DIR}"
 : "${MW_SVG_MAX_SIZE:=4096}"
 : "${MW_SVG_CONVERTER:=auto}"
 : "${MW_MERMAID_THEME:=forest}"
+: "${MW_RL_DEBUG:=0}"
 
 echo "[init] Waiting for database at ${MW_DB_HOST}..."
 until mysqladmin ping -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --silent; do
@@ -249,7 +250,7 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Enabling Mermaid extension"
     echo "wfLoadExtension( 'Mermaid' );" >> /data/LocalSettings.php
   fi
-  # Configure Mermaid theme
+  # Configure Mermaid theme (Mermaid extension uses $mermaidgDefaultTheme)
   if grep -q '^[[:space:]]*\$mermaidgDefaultTheme[[:space:]]*=' /data/LocalSettings.php; then
     sed -i -E 's/^[[:space:]]*\$mermaidgDefaultTheme[[:space:]]*=.*/$mermaidgDefaultTheme = '\''"${MW_MERMAID_THEME}"'\'';/' /data/LocalSettings.php
   else
@@ -341,6 +342,13 @@ fi
 if [ -f /data/LocalSettings.php ] && ! grep -q "\$wgTmhEnableMp4Uploads" /data/LocalSettings.php; then
   echo "[init] Allowing MP4 uploads via TMH (final enforcement)"
   echo "\$wgTmhEnableMp4Uploads = true;" >> /data/LocalSettings.php
+  cp -f /data/LocalSettings.php LocalSettings.php
+fi
+
+# Optional: Enable ResourceLoader debug (disables JS minification)
+if [ "${MW_RL_DEBUG}" = "1" ] && [ -f /data/LocalSettings.php ] && ! grep -q "^\$wgResourceLoaderDebug\b" /data/LocalSettings.php; then
+  echo "[init] Enabling ResourceLoader debug mode"
+  echo "\$wgResourceLoaderDebug = true;" >> /data/LocalSettings.php
   cp -f /data/LocalSettings.php LocalSettings.php
 fi
 

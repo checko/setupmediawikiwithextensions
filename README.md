@@ -46,7 +46,8 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
   - `MW_SITE_SERVER` (e.g., `http://localhost:9090`)
   - `MW_MAX_IMAGE_AREA` (max pixels for thumbnailing; raise to avoid "greater than 12.5 MP" errors)
   - `MW_SVG_MAX_SIZE` (max raster size for SVG thumbnails; default 4096)
-  - `MW_SVG_CONVERTER` (auto | rsvg | ImageMagick | inkscape; default auto)
+- `MW_SVG_CONVERTER` (auto | rsvg | ImageMagick | inkscape; default auto)
+- `MW_RL_DEBUG` (0/1) enable ResourceLoader debug to skip JS minification (for troubleshooting)
 - To change port, edit `docker-compose.yml` port mapping.
 
 ### Important: Do not edit `./data/*` directly

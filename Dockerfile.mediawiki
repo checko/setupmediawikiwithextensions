@@ -44,6 +44,21 @@ RUN set -eux; \
       git clone --depth 1 https://github.com/SemanticMediaWiki/Mermaid "$EXT_DIR/Mermaid"; \
     fi;
 
+# Patch Mermaid extension to avoid bundling the library in RL; load via CDN at runtime
+COPY patches/ext.mermaid.init.js /tmp/ext.mermaid.init.js
+RUN set -eux; \
+    cd /var/www/html/extensions/Mermaid; \
+    python3 - <<'PY'
+import json
+p='extension.json'
+data=json.load(open(p))
+data['ResourceModules']['ext.mermaid']['packageFiles']=['resources/ext.mermaid.js']
+json.dump(data, open(p,'w'), indent=2)
+PY
+RUN set -eux; \
+    cd /var/www/html/extensions/Mermaid; \
+    cp -f /tmp/ext.mermaid.init.js resources/ext.mermaid.js
+
 # Install WikiMarkdown PHP dependencies
 RUN set -eux; \
     cd /var/www/html/extensions/WikiMarkdown; \
