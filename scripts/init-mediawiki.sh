@@ -19,6 +19,7 @@ cd "${MW_DIR}"
 : "${MW_MAX_IMAGE_AREA:=100000000}"
 : "${MW_SVG_MAX_SIZE:=4096}"
 : "${MW_SVG_CONVERTER:=auto}"
+: "${MW_MERMAID_THEME:=forest}"
 
 echo "[init] Waiting for database at ${MW_DB_HOST}..."
 until mysqladmin ping -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --silent; do
@@ -229,6 +230,17 @@ if [ -f /data/LocalSettings.php ]; then
   if ! grep -q "TimedMediaHandler" /data/LocalSettings.php; then
     echo "[init] Enabling TimedMediaHandler in LocalSettings.php"
     echo "wfLoadExtension( 'TimedMediaHandler' );" >> /data/LocalSettings.php
+  fi
+  # Ensure Mermaid is enabled
+  if ! grep -q "wfLoadExtension( 'Mermaid' );" /data/LocalSettings.php; then
+    echo "[init] Enabling Mermaid extension"
+    echo "wfLoadExtension( 'Mermaid' );" >> /data/LocalSettings.php
+  fi
+  # Configure Mermaid theme
+  if grep -q '^[[:space:]]*\$mermaidgDefaultTheme[[:space:]]*=' /data/LocalSettings.php; then
+    sed -i -E 's/^[[:space:]]*\$mermaidgDefaultTheme[[:space:]]*=.*/$mermaidgDefaultTheme = '\''"${MW_MERMAID_THEME}"'\'';/' /data/LocalSettings.php
+  else
+    echo "\$mermaidgDefaultTheme = '${MW_MERMAID_THEME}';" >> /data/LocalSettings.php
   fi
   # Ensure WikiMarkdown is enabled
   if ! grep -q "WikiMarkdown" /data/LocalSettings.php; then

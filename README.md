@@ -61,11 +61,17 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 - SyntaxHighlight (with Pygments for code blocks)
 - SemanticMediaWiki (`mediawiki/semantic-media-wiki ~4.1` via Composer)
 - WikiMarkdown (adds `<markdown>...</markdown>` tag and Markdown content model)
+- Mermaid (parser function `#mermaid` for flowcharts/diagrams)
 
 ### Markdown Usage
 - Inline/block tag: wrap content in `<markdown>...</markdown>` on any page.
 - Content model: pages with `.md` suffix are treated as Markdown.
 - Parsedown/Extra/Extended dependencies are bundled in the image; no extra steps needed.
+
+### Mermaid Usage
+- Use parser function with Mermaid syntax:
+  `{{#mermaid:graph TD; A-->B; B-->C;}}`
+- Theme via `.env`: `MW_MERMAID_THEME` (forest/default/neutral/dark).
 
 ## Maintenance
 - Run MediaWiki update (schema changes, extension updates):

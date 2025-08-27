@@ -24,7 +24,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 WORKDIR /var/www/html
 
-# Fetch MsUpload, TimedMediaHandler, SyntaxHighlight, WikiMarkdown (others are bundled with the MediaWiki image tarball)
+# Fetch MsUpload, TimedMediaHandler, SyntaxHighlight, WikiMarkdown, Mermaid (others are bundled with the MediaWiki image tarball)
 RUN set -eux; \
     EXT_DIR=/var/www/html/extensions; \
     mkdir -p "$EXT_DIR"; \
@@ -39,6 +39,9 @@ RUN set -eux; \
     fi; \
     if [ ! -d "$EXT_DIR/WikiMarkdown" ]; then \
       git clone --depth 1 https://github.com/kuenzign/WikiMarkdown "$EXT_DIR/WikiMarkdown"; \
+    fi; \
+    if [ ! -d "$EXT_DIR/Mermaid" ]; then \
+      git clone --depth 1 https://github.com/SemanticMediaWiki/Mermaid "$EXT_DIR/Mermaid"; \
     fi;
 
 # Install WikiMarkdown PHP dependencies
