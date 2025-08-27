@@ -260,7 +260,7 @@ if [ -f /data/LocalSettings.php ]; then
     echo "\$wgMaxImageArea = ${MW_MAX_IMAGE_AREA};" >> /data/LocalSettings.php
   fi
   # Allow SVG uploads
-  if ! grep -q "\\$wgFileExtensions\\[\\] = 'svg';" /data/LocalSettings.php; then
+  if ! grep -q '\\$wgFileExtensions\\[\\].*svg' /data/LocalSettings.php; then
     echo "[init] Enabling SVG uploads"
     echo "\$wgFileExtensions[] = 'svg';" >> /data/LocalSettings.php
   fi
