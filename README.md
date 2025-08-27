@@ -43,6 +43,7 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
   - `MW_ADMIN_USER`, `MW_ADMIN_PASS`
   - `MW_DB_*` (db name/user/pass)
   - `MW_SITE_SERVER` (e.g., `http://localhost:9090`)
+  - `MW_MAX_IMAGE_AREA` (max pixels for thumbnailing; raise to avoid "greater than 12.5 MP" errors)
 - To change port, edit `docker-compose.yml` port mapping.
 
 ### Important: Do not edit `./data/*` directly
@@ -72,6 +73,7 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 - Blank/failed VE edits: ensure `MW_SITE_SERVER` matches how you access the wiki (scheme/host/port).
 - PDF thumbnails/text extract missing: ensure ImageMagick, Ghostscript, Poppler are installed (baked into image). For very large PDFs, resource limits may apply.
 - DB not ready on first start: the web container waits for DB; if stuck, check `docker compose logs db`.
+- "File with dimensions greater than 12.5 MP": increase `MW_MAX_IMAGE_AREA` in `.env` (e.g., `100000000` for 100 MP). Larger values consume more CPU/RAM during thumb generation.
 
 ## Verifying Extensions
 See `docs/extension-checks.md` for quick ways to verify each extension is enabled and working.

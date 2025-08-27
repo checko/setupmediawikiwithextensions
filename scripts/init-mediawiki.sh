@@ -16,6 +16,7 @@ cd "${MW_DIR}"
 : "${MW_DB_ROOT_PASSWORD:=root_pass}"
 : "${MW_SITE_SERVER:=http://localhost:9090}"
 : "${MW_ENABLE_SMW:=1}"
+: "${MW_MAX_IMAGE_AREA:=100000000}"
 
 echo "[init] Waiting for database at ${MW_DB_HOST}..."
 until mysqladmin ping -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --silent; do
@@ -247,6 +248,14 @@ if [ -f /data/LocalSettings.php ]; then
   else
     echo "[init] Setting MediaWiki max upload size to 1GiB"
     echo "\$wgMaxUploadSize = 1024 * 1024 * 1024;" >> /data/LocalSettings.php
+  fi
+  # Ensure larger thumbnails for big images: set $wgMaxImageArea (default 100 MP)
+  if grep -q '^[[:space:]]*\$wgMaxImageArea[[:space:]]*=' /data/LocalSettings.php; then
+    echo "[init] Setting wgMaxImageArea to ${MW_MAX_IMAGE_AREA}"
+    sed -i -E "s/^[[:space:]]*\\$wgMaxImageArea[[:space:]]*=.*/\\$wgMaxImageArea = ${MW_MAX_IMAGE_AREA};/" /data/LocalSettings.php
+  else
+    echo "[init] Adding wgMaxImageArea = ${MW_MAX_IMAGE_AREA}"
+    echo "\$wgMaxImageArea = ${MW_MAX_IMAGE_AREA};" >> /data/LocalSettings.php
   fi
   cp -f /data/LocalSettings.php LocalSettings.php
 fi
