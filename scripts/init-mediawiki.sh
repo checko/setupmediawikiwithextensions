@@ -231,10 +231,14 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Enabling TimedMediaHandler in LocalSettings.php"
     echo "wfLoadExtension( 'TimedMediaHandler' );" >> /data/LocalSettings.php
   fi
-  # Ensure Parsoid REST API (for VisualEditor) is enabled
-  if ! grep -q "wfLoadExtension( 'Parsoid' );" /data/LocalSettings.php; then
-    echo "[init] Enabling Parsoid extension (REST API)"
-    echo "wfLoadExtension( 'Parsoid' );" >> /data/LocalSettings.php
+  # Ensure Parsoid REST API (for VisualEditor) is enabled via vendor path
+  if grep -q "wfLoadExtension( 'Parsoid' );" /data/LocalSettings.php; then
+    echo "[init] Normalizing Parsoid load to vendor path"
+    sed -i "s#wfLoadExtension( 'Parsoid' );#wfLoadExtension( 'Parsoid', \"\$IP/vendor/wikimedia/parsoid/extension.json\" );#" /data/LocalSettings.php
+  fi
+  if ! grep -q "vendor/wikimedia/parsoid/extension.json" /data/LocalSettings.php; then
+    echo "[init] Enabling Parsoid extension (REST API) via vendor path"
+    echo "wfLoadExtension( 'Parsoid', \"\$IP/vendor/wikimedia/parsoid/extension.json\" );" >> /data/LocalSettings.php
   fi
   # Ensure canonical server is set (keeps REST domain consistent)
   if ! grep -q "^\$wgCanonicalServer\b" /data/LocalSettings.php; then
