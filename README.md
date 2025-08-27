@@ -60,6 +60,12 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 - MsUpload, WikiEditor, MultimediaViewer, PdfHandler, VisualEditor, CodeEditor
 - SyntaxHighlight (with Pygments for code blocks)
 - SemanticMediaWiki (`mediawiki/semantic-media-wiki ~4.1` via Composer)
+- WikiMarkdown (adds `<markdown>...</markdown>` tag and Markdown content model)
+
+### Markdown Usage
+- Inline/block tag: wrap content in `<markdown>...</markdown>` on any page.
+- Content model: pages with `.md` suffix are treated as Markdown.
+- Parsedown/Extra/Extended dependencies are bundled in the image; no extra steps needed.
 
 ## Maintenance
 - Run MediaWiki update (schema changes, extension updates):
