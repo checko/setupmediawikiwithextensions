@@ -28,6 +28,12 @@ until mysqladmin ping -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --si
 done
 echo "[init] Database is up."
 
+# Helper: detect whether the target database already has core MW tables
+db_is_initialized() {
+  mysql -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" \
+    -e "SELECT 1 FROM ${MW_DB_NAME}.page LIMIT 1" >/dev/null 2>&1
+}
+
 # Ensure MsUpload extension exists (clone if missing)
 if [ ! -d "${MW_DIR}/extensions/MsUpload" ]; then
   echo "[init] Fetching MsUpload extension..."
@@ -45,6 +51,35 @@ if [ -f /data/LocalSettings.php ]; then
     echo "[init] Copying existing /data/LocalSettings.php into webroot..."
     cp -f /data/LocalSettings.php LocalSettings.php
   fi
+fi
+
+# If LocalSettings.php exists but DB is empty (fresh DB), run the installer to create schema
+if [ -f LocalSettings.php ] && ! db_is_initialized; then
+  echo "[init] Detected LocalSettings.php but database lacks core tables; running installer to initialize schema..."
+  # Backup any existing LocalSettings.php (both locations)
+  [ -f LocalSettings.php ] && mv LocalSettings.php LocalSettings.php.preinstall || true
+  [ -f /data/LocalSettings.php ] && mv /data/LocalSettings.php /data/LocalSettings.php.preinstall || true
+
+  php maintenance/install.php \
+    --dbtype mysql \
+    --dbserver "${MW_DB_HOST}" \
+    --dbname "${MW_DB_NAME}" \
+    --dbuser "${MW_DB_USER}" \
+    --dbpass "${MW_DB_PASS}" \
+    --server "${MW_SITE_SERVER%/}" \
+    --scriptpath "" \
+    --lang "${MW_LANG}" \
+    --pass "${MW_ADMIN_PASS}" \
+    "${MW_SITE_NAME}" "${MW_ADMIN_USER}"
+
+  echo "[init] Installer finished (DB init). Persisting LocalSettings.php to /data and syncing webroot..."
+  mkdir -p /data
+  if [ -f LocalSettings.php ]; then
+    cp -f LocalSettings.php /data/LocalSettings.php
+    cp -f /data/LocalSettings.php LocalSettings.php
+  fi
+  echo "[init] Running maintenance/update.php after DB initialization..."
+  php maintenance/update.php --quick || true
 fi
 
 if [ ! -f LocalSettings.php ]; then
@@ -73,7 +108,7 @@ if [ ! -f LocalSettings.php ]; then
   # Try to install Semantic MediaWiki via Composer before enabling it
   SMW_OK=0
   echo "[init] Installing Semantic MediaWiki via Composer..."
-  if composer --no-interaction --no-progress require "mediawiki/semantic-media-wiki:~4.1"; then
+  if [ -w composer.json ] && composer --no-interaction --no-progress require "mediawiki/semantic-media-wiki:~4.1"; then
     SMW_OK=1
     echo "[init] Semantic MediaWiki installed."
   else
@@ -191,7 +226,7 @@ if [ -f /data/LocalSettings.php ]; then
     # Install SMW code if missing
     if [ ! -f "${MW_DIR}/extensions/SemanticMediaWiki/extension.json" ]; then
       echo "[init] Installing Semantic MediaWiki via Composer (env enabled)..."
-      if ! composer --no-interaction --no-progress require "mediawiki/semantic-media-wiki:~4.1"; then
+      if ! { [ -w composer.json ] && composer --no-interaction --no-progress require "mediawiki/semantic-media-wiki:~4.1"; }; then
         echo "[init] Warning: Failed to install SemanticMediaWiki; startup will continue without SMW."
       fi
     fi
