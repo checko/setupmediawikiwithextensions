@@ -157,7 +157,7 @@ PHP
   # If SMW was installed, enable it now (after the heredoc to safely toggle)
   if [ "$SMW_OK" = "1" ]; then
     echo "wfLoadExtension( 'SemanticMediaWiki' );" >> /data/LocalSettings.php
-    echo "enableSemantics( parse_url( \$wgServer, PHP_URL_HOST ) );" >> /data/LocalSettings.php
+    echo "\$smwgNamespace = parse_url( \$wgServer, PHP_URL_HOST );" >> /data/LocalSettings.php
   fi
 
   echo "[init] Running maintenance/update.php (including SMW tables)..."
@@ -233,7 +233,7 @@ if [ -f /data/LocalSettings.php ]; then
     # Append LocalSettings lines if not present
     if ! grep -q "SemanticMediaWiki" /data/LocalSettings.php && [ -f "${MW_DIR}/extensions/SemanticMediaWiki/extension.json" ]; then
       echo "wfLoadExtension( 'SemanticMediaWiki' );" >> /data/LocalSettings.php
-      echo "enableSemantics( parse_url( \$wgServer, PHP_URL_HOST ) );" >> /data/LocalSettings.php
+      echo "\$smwgNamespace = parse_url( \$wgServer, PHP_URL_HOST );" >> /data/LocalSettings.php
       echo "[init] Enabled SemanticMediaWiki in LocalSettings.php"
       cp -f /data/LocalSettings.php LocalSettings.php
       php maintenance/update.php --quick || true
