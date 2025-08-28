@@ -71,7 +71,7 @@ RUN set -eux; \
 # Install Semantic MediaWiki by cloning the extension and installing its deps
 RUN set -eux; \
     EXT_DIR=/var/www/html/extensions; \
-    git clone --depth 1 -b 4.1.x https://github.com/SemanticMediaWiki/SemanticMediaWiki "$EXT_DIR/SemanticMediaWiki"; \
+    git clone --depth 1 https://github.com/SemanticMediaWiki/SemanticMediaWiki "$EXT_DIR/SemanticMediaWiki"; \
     cd "$EXT_DIR/SemanticMediaWiki"; \
     composer install --no-dev --no-interaction --no-progress --no-scripts --ignore-platform-reqs \
       || composer update --no-dev --no-interaction --no-progress --no-scripts --ignore-platform-reqs
