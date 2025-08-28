@@ -68,6 +68,11 @@ RUN set -eux; \
     composer install --no-dev --no-interaction --no-progress --no-scripts --ignore-platform-reqs \
       || composer update --no-dev --no-interaction --no-progress --no-scripts --ignore-platform-reqs
 
+# Install Semantic MediaWiki at build time to avoid runtime permission issues
+RUN set -eux; \
+    cd /var/www/html; \
+    composer require --no-dev --no-interaction --no-progress "mediawiki/semantic-media-wiki:~4.1"
+
 # Note: Semantic MediaWiki will be installed at runtime via composer inside the container
 
 # Install getID3 library (vendor) for TimedMediaHandler metadata support
