@@ -238,6 +238,12 @@ if [ -f /data/LocalSettings.php ]; then
       cp -f /data/LocalSettings.php LocalSettings.php
       php maintenance/update.php --quick || true
     fi
+    # Normalize legacy enableSemantics() to direct smwgNamespace assignment
+    if grep -q "enableSemantics" /data/LocalSettings.php; then
+      echo "[init] Normalizing enableSemantics() to $smwgNamespace assignment"
+      sed -i -E "s/enableSemantics\(.*\);/\$smwgNamespace = parse_url( \$wgServer, PHP_URL_HOST );/" /data/LocalSettings.php || true
+      cp -f /data/LocalSettings.php LocalSettings.php
+    fi
   else
     # If disabled by env but enabled in config and code missing, comment out to avoid fatals
     if grep -q "SemanticMediaWiki" /data/LocalSettings.php && [ ! -f "${MW_DIR}/extensions/SemanticMediaWiki/extension.json" ]; then
