@@ -71,10 +71,8 @@ RUN set -eux; \
 # Install Semantic MediaWiki by cloning the extension and installing its deps
 RUN set -eux; \
     EXT_DIR=/var/www/html/extensions; \
-    git clone --depth 1 https://github.com/SemanticMediaWiki/SemanticMediaWiki "$EXT_DIR/SemanticMediaWiki"; \
-    cd "$EXT_DIR/SemanticMediaWiki"; \
-    composer install --no-dev --no-interaction --no-progress --no-scripts --ignore-platform-reqs \
-      || composer update --no-dev --no-interaction --no-progress --no-scripts --ignore-platform-reqs
+    mkdir -p "$EXT_DIR"; \
+    composer create-project --no-interaction --no-dev --no-progress mediawiki/semantic-media-wiki:"~4.1" "$EXT_DIR/SemanticMediaWiki"
 
 
 # Install getID3 library (vendor) for TimedMediaHandler metadata support
