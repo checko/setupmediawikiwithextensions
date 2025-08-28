@@ -2,7 +2,7 @@
 
 Quick ways to confirm your requested extensions are installed, enabled, and working.
 
-Covers: MsUpload, WikiEditor, MultimediaViewer, PdfHandler, SemanticMediaWiki, VisualEditor, CodeEditor, Mermaid.
+Covers: MsUpload, WikiEditor, MultimediaViewer, PdfHandler, SemanticMediaWiki, VisualEditor, CodeEditor, Mermaid, WikiMarkdown.
 
 ## Check via UI
 - Special:Version: open `http://<your-host>:9090/index.php/Special:Version`
@@ -56,9 +56,14 @@ PHP
         Child B
     }}`
   - Notes: start Mermaid blocks at column 1 (not inside list bullets); mindmap requires one root and consistent indentation.
+- Markdown (WikiMarkdown):
+  - Inline tag: `<markdown># Title</markdown>` renders Markdown on any page.
+  - Content model: create a page named `Test.md` with `# Title` to use Markdown content model.
 - SemanticMediaWiki:
   - Confirm at `Special:Version`, then visit `Special:SMWAdmin` to see status.
+  - Create `Property:Has number` with `[[Has type::Number]]`.
   - Create a page with: `[[Has number::42]]` and save.
+  - Query: `{{#ask: [[Has number::+]] | ?Has number | sort=Has number }}`
   - Optional rebuild (can take time on large wikis):
     - `docker compose exec mediawiki php extensions/SemanticMediaWiki/maintenance/rebuildData.php -d 50`
 

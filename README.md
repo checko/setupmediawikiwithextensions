@@ -6,7 +6,7 @@ A quick-start MediaWiki stack using Docker Compose, pre-wired with commonly used
 - WikiEditor
 - MultimediaViewer
 - PdfHandler
-- SemanticMediaWiki (SMW)
+- SemanticMediaWiki (SMW) — baked into the image at build time
 - VisualEditor (uses built-in Parsoid in MW 1.41)
 - CodeEditor
 
@@ -27,11 +27,12 @@ Port is mapped to `9090` on the host.
    - User: `Admin`
    - Password: as set in `.env` (default `changeme123!` — change it!)
 
-On first run, the container auto-installs MediaWiki, persists `LocalSettings.php` to `./data/LocalSettings.php`, enables the extensions, and runs database updates including SMW tables.
+On first run, the container auto-installs MediaWiki even if a prior `LocalSettings.php` exists but the DB is empty, persists `LocalSettings.php` to `./data/LocalSettings.php`, and enables the extensions. SMW is bundled in the image and enabled; if SMW shows a “missing upgrade key” page, run the SMW setup step under Maintenance below.
 
 ## What’s in the stack
 - `mediawiki` service: custom image based on `mediawiki:1.41`, plus system tools for PdfHandler and Composer. Extensions are cloned/installed during image build.
   - Includes `librsvg2-bin` for high‑quality SVG rasterization via `rsvg-convert`.
+  - Includes Semantic MediaWiki installed at build time (`extensions/SemanticMediaWiki`).
 - `db` service: `mariadb:10.6` with persistent volume.
 - Volumes:
   - Database data in a named volume (`db_data`).
@@ -54,13 +55,13 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 - The file `./data/LocalSettings.php` is persisted output and managed by the init script.
 - Make configuration changes in `scripts/init-mediawiki.sh` (source of truth) and/or `.env`, then rebuild/recreate:
   - `docker compose up -d --build --force-recreate`
-- The init script will enforce config (extensions, upload types/sizes, TMH, etc.) and sync the webroot copy of `LocalSettings.php`.
+- The init script will enforce config (extensions, upload types/sizes, TMH, etc.) and sync the webroot copy of `LocalSettings.php`. It will also initialize the database schema on first boot even if `LocalSettings.php` already exists but the DB is still empty.
 - Rationale: editing `./data/LocalSettings.php` manually can be overwritten or drift from the intended, versioned configuration.
 
 ## Installed Extensions
 - MsUpload, WikiEditor, MultimediaViewer, PdfHandler, VisualEditor, CodeEditor
 - SyntaxHighlight (with Pygments for code blocks)
-- SemanticMediaWiki (`mediawiki/semantic-media-wiki ~4.1` via Composer)
+- SemanticMediaWiki (installed at image build via Composer create-project; enabled by default)
 - WikiMarkdown (adds `<markdown>...</markdown>` tag and Markdown content model)
 - Mermaid (parser function `#mermaid` for flowcharts/diagrams)
 
@@ -106,6 +107,8 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
 ## Maintenance
 - Run MediaWiki update (schema changes, extension updates):
   - `docker compose exec mediawiki php maintenance/update.php --quick`
+- Initialize or repair Semantic MediaWiki store/tables:
+  - `docker compose exec mediawiki php extensions/SemanticMediaWiki/maintenance/setupStore.php --skip-import`
 - Rebuild SMW data (optional):
   - `docker compose exec mediawiki php extensions/SemanticMediaWiki/maintenance/rebuildData.php -d 50`
 - View logs:
@@ -114,6 +117,7 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
   - `docker compose down`
 - Full reset (dev only – removes volumes):
   - `docker compose down -v`
+  - To also remove images for a clean rebuild: `docker compose down -v --rmi all --remove-orphans && docker compose build --no-cache && docker compose up -d`
 
 ## Troubleshooting
 - Blank/failed VE edits: ensure `MW_SITE_SERVER` matches how you access the wiki (scheme/host/port).
@@ -125,9 +129,14 @@ On first run, the container auto-installs MediaWiki, persists `LocalSettings.php
   - Ensure blocks aren’t nested inside list items (leading `-`). This changes indentation and breaks mindmap parsing.
   - Hard refresh to clear cached modules. The initializer prevents double renders and loads Mermaid locally from `/extensions/Mermaid/resources/mermaid.min.js`.
   - See `docs/DEBUG-LOGGING.md` for the mermaid debugging log and fixes applied.
+- Semantic MediaWiki:
+  - If Special:Version or Special:SMWAdmin shows an “upgrade key” or setup message, run:
+    - `docker compose exec mediawiki php extensions/SemanticMediaWiki/maintenance/setupStore.php`
+    - then `docker compose exec mediawiki php maintenance/update.php --quick`
+  - The init script uses `$smwgNamespace = parse_url( $wgServer, PHP_URL_HOST );` (no `enableSemantics()` call needed).
 
 ## Verifying Extensions
-See `docs/extension-checks.md` for quick ways to verify each extension is enabled and working.
+See `docs/extension-checks.md` for quick ways to verify each extension is enabled and working, including example SMW queries and Mermaid blocks.
 
 ## Security Notes
 - Change default admin password in `.env` before first run or immediately after via Special:ChangePassword.

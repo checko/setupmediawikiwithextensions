@@ -1,6 +1,6 @@
 # Session Memo
 
-Date: 2025-08-27
+Date: 2025-08-28
 Branch: `settings-update`
 Remote: `origin/settings-update`
 
@@ -26,12 +26,20 @@ Remote: `origin/settings-update`
 - VisualEditor / Parsoid:
   - Enabled Parsoid from vendor path: `wfLoadExtension('Parsoid', "$IP/vendor/wikimedia/parsoid/extension.json");`
   - Set `$wgCanonicalServer = $wgServer;` to keep REST “domain” consistent.
+ - SemanticMediaWiki:
+  - Installed at image build via Composer create-project into `extensions/SemanticMediaWiki`.
+  - Init script enables SMW and assigns `$smwgNamespace = parse_url( $wgServer, PHP_URL_HOST );` (no `enableSemantics()` call).
+  - If prompted for an upgrade key, run `php extensions/SemanticMediaWiki/maintenance/setupStore.php` in the container.
+ - Init script hardening:
+  - Detect empty DB on first boot and run installer even when `LocalSettings.php` exists (prevents DBQueryError).
+  - Skip SMW composer at runtime unless composer files are writable.
 
 ## How To Run
 - Start: `docker compose up -d`
 - Rebuild after config changes: `docker compose up -d --build --force-recreate`
 - Logs: `docker compose logs -f mediawiki`
 - URL: `http://192.168.145.166:9090`
+ - Clean reset (testing): `docker compose down -v --rmi all --remove-orphans && docker compose build --no-cache && docker compose up -d`
 
 ## Quick Verification
 - VisualEditor: Edit any page; VE should load without “Unable to fetch Parsoid HTML”.
@@ -49,9 +57,12 @@ Remote: `origin/settings-update`
   - Upload an SVG with Traditional Chinese text; thumbnails should render correctly.
 - Large image thumbnails:
   - Upload > 12.5 MP; thumbnails should be generated (via `MW_MAX_IMAGE_AREA`).
+ - SMW:
+  - Visit `Special:SMWAdmin` / `Special:SemanticStatistics`. Create `Property:Has color` with `[[Has type::String]]`, annotate a page `[[Has color::Red]]`, check `Special:Browse/<Page>`.
+  - Try `{{#ask: [[Has color::+]] | ?Has color}}`.
 
 ## Notes / Follow-ups
-- SMW Composer install at startup logs permission denied (non-blocking). If SMW is needed, adjust install flow/permissions later.
+- SMW is installed at build; if you see an SMW setup/upgrade page, run `setupStore.php` then `maintenance/update.php --quick`.
 - If access URL changes, ensure `.env` `MW_SITE_SERVER` exactly matches (scheme/host/port) and rebuild.
 
 ## Environment Variables
