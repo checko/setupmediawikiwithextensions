@@ -22,6 +22,12 @@ cd "${MW_DIR}"
 : "${MW_MERMAID_THEME:=forest}"
 : "${MW_RL_DEBUG:=0}"
 
+# Optional auto-restore on first boot
+: "${MW_RESTORE_ON_INIT:=0}"
+: "${MW_RESTORE_DB_DUMP:=}"
+: "${MW_RESTORE_UPLOADS_ARCHIVE:=}"
+: "${MW_FORCE_DB_RESTORE:=0}"
+
 echo "[init] Waiting for database at ${MW_DB_HOST}..."
 until mysqladmin ping -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --silent; do
   sleep 2
@@ -33,6 +39,118 @@ db_is_initialized() {
   mysql -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" \
     -e "SELECT 1 FROM ${MW_DB_NAME}.page LIMIT 1" >/dev/null 2>&1
 }
+
+# Normalize booleans from env
+normalize_bool() {
+  case "${1:-}" in
+    1|true|TRUE|True|yes|YES|on|ON) echo 1 ;;
+    *) echo 0 ;;
+  esac
+}
+
+# Perform optional one-time DB and uploads restore from /data paths
+do_auto_restore() {
+  WANT_RESTORE=$(normalize_bool "$MW_RESTORE_ON_INIT")
+  [ "$WANT_RESTORE" = "1" ] || return 0
+
+  # DB restore
+  if [ -n "${MW_RESTORE_DB_DUMP}" ] && [ -f "${MW_RESTORE_DB_DUMP}" ]; then
+    base=$(basename -- "${MW_RESTORE_DB_DUMP}")
+    marker="/data/.restored-db.${base}"
+    if [ ! -f "$marker" ]; then
+      echo "[restore:init] Preparing to restore DB from ${MW_RESTORE_DB_DUMP}"
+      if db_is_initialized; then
+        if [ "$(normalize_bool "$MW_FORCE_DB_RESTORE")" = "1" ]; then
+          echo "[restore:init] Dropping and recreating database ${MW_DB_NAME} (MW_FORCE_DB_RESTORE=1)"
+          mysql -h"${MW_DB_HOST}" -u root -p"${MW_DB_ROOT_PASSWORD}" -e "DROP DATABASE IF EXISTS \`${MW_DB_NAME}\`; CREATE DATABASE \`${MW_DB_NAME}\` CHARACTER SET binary;"
+        else
+          echo "[restore:init] Database already has tables; skipping DB import (set MW_FORCE_DB_RESTORE=1 to overwrite)."
+          :
+        fi
+      fi
+
+      if ! db_is_initialized; then
+        echo "[restore:init] Importing SQL dump into ${MW_DB_NAME} ... (this may take a while)"
+        case "$base" in
+          *.sql.gz|*.gz) gzip -dc "${MW_RESTORE_DB_DUMP}" | mysql -h"${MW_DB_HOST}" -u root -p"${MW_DB_ROOT_PASSWORD}" "${MW_DB_NAME}" ;;
+          *.sql)        mysql -h"${MW_DB_HOST}" -u root -p"${MW_DB_ROOT_PASSWORD}" "${MW_DB_NAME}" < "${MW_RESTORE_DB_DUMP}" ;;
+          *) echo "[restore:init] Unsupported DB dump extension: $base" ;;
+        esac
+        echo "[restore:init] DB import complete."
+      fi
+
+      # Ensure a LocalSettings.php exists to run update.php (use minimal one if none provided)
+      if [ ! -f /data/LocalSettings.php ]; then
+        echo "[restore:init] Seeding LocalSettings.php from minimal upgrade config"
+        cp -f /data/LocalSettings.upgrade.php /data/LocalSettings.php || true
+      fi
+      if [ -f /data/LocalSettings.php ]; then
+        cp -f /data/LocalSettings.php LocalSettings.php
+        echo "[restore:init] Running maintenance/update.php after DB import..."
+        php maintenance/update.php --quick || true
+      fi
+      date > "$marker"
+    else
+      echo "[restore:init] DB already restored earlier (marker present: $(basename "$marker"))"
+    fi
+  fi
+
+  # Uploads restore
+  if [ -n "${MW_RESTORE_UPLOADS_ARCHIVE}" ] && [ -f "${MW_RESTORE_UPLOADS_ARCHIVE}" ]; then
+    base=$(basename -- "${MW_RESTORE_UPLOADS_ARCHIVE}")
+    marker="/data/.restored-uploads.${base}"
+    if [ ! -f "$marker" ]; then
+      echo "[restore:init] Restoring uploads from ${MW_RESTORE_UPLOADS_ARCHIVE} ..."
+      WORK=$(mktemp -d /tmp/uploads.extract.XXXXXX)
+      TARGET="${MW_DIR}/images"
+      mkdir -p "$TARGET"
+      # Backup existing images dir if non-empty
+      if [ "$(ls -A "$TARGET" 2>/dev/null | wc -l)" -gt 0 ]; then
+        ts=$(date +%Y%m%d-%H%M%S)
+        echo "[restore:init] Backing up existing images to ${TARGET}.bak-${ts}"
+        cp -a "$TARGET" "${TARGET}.bak-${ts}"
+      fi
+      case "$base" in
+        *.tar.gz|*.tgz) tar -xzf "${MW_RESTORE_UPLOADS_ARCHIVE}" -C "$WORK" ;;
+        *.zip)          unzip -q -o "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK" ;;
+        *) echo "[restore:init] Unsupported uploads archive extension: $base" ;;
+      esac
+      copied=0
+      for d in "$WORK"/mediawiki-*/images; do
+        if [ -d "$d" ]; then
+          echo "[restore:init] Detected layout: mediawiki-*/images"
+          cp -a "$d"/. "$TARGET"/
+          copied=1
+        fi
+      done
+      if [ "$copied" -eq 0 ] && [ -d "$WORK/images" ]; then
+        echo "[restore:init] Detected layout: images/"
+        cp -a "$WORK/images"/. "$TARGET"/
+        copied=1
+      fi
+      if [ "$copied" -eq 0 ]; then
+        echo "[restore:init] Detected layout: hashed subdirs at root"
+        cp -a "$WORK"/. "$TARGET"/
+        copied=1
+      fi
+      echo "[restore:init] Fixing ownership and permissions"
+      chown -R www-data:www-data "$TARGET"
+      find "$TARGET" -type d -exec chmod 755 {} +
+      find "$TARGET" -type f -exec chmod 644 {} +
+      echo "[restore:init] Refreshing image metadata"
+      php maintenance/refreshImageMetadata.php --force || true
+      php maintenance/rebuildImages.php --missing || true
+      rm -rf "$WORK"
+      date > "$marker"
+      echo "[restore:init] Uploads restore complete"
+    else
+      echo "[restore:init] Uploads already restored earlier (marker present: $(basename "$marker"))"
+    fi
+  fi
+}
+
+# Run auto-restore before installer logic so we avoid web UI and preserve imports
+do_auto_restore
 
 # Ensure MsUpload extension exists (clone if missing)
 if [ ! -d "${MW_DIR}/extensions/MsUpload" ]; then
@@ -213,13 +331,6 @@ PHP
 fi
 
 # Ensure SMW installed/enabled per env toggle (runs on every start)
-normalize_bool() {
-  case "${1:-}" in
-    1|true|TRUE|True|yes|YES|on|ON) echo 1 ;;
-    *) echo 0 ;;
-  esac
-}
-
 WANT_SMW=$(normalize_bool "$MW_ENABLE_SMW")
 if [ -f /data/LocalSettings.php ]; then
   if [ "$WANT_SMW" = "1" ]; then

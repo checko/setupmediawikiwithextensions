@@ -12,4 +12,12 @@ data/
 # Composer cache (if used locally)
 vendor/
 composer.lock
-
+# Ignore large import artifacts at repo root
+/*.sql
+/*.sql.gz
+/images.*
+/*.zip
+/*.tar.gz
+/*.tgz
+/*.bundle
+/*.patch

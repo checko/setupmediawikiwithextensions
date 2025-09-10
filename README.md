@@ -29,6 +29,56 @@ Port is mapped to `9090` on the host.
 
 On first run, the container auto-installs MediaWiki even if a prior `LocalSettings.php` exists but the DB is empty, persists `LocalSettings.php` to `./data/LocalSettings.php`, and enables the extensions. SMW is bundled in the image and enabled; if SMW shows a “missing upgrade key” page, run the SMW setup step under Maintenance below.
 
+## Restore existing wiki (DB + uploads) automatically
+
+Place your dump/archive files in `./data` and enable one-time restore on init via `.env`.
+
+- Supported DB dump formats: `.sql`, `.sql.gz`
+- Supported uploads archives: `.zip`, `.tar.gz`, `.tgz`
+
+1) Copy and edit `.env`:
+   ```bash
+   cp .env.example .env
+   # set these values in .env
+   MW_RESTORE_ON_INIT=1
+   MW_RESTORE_DB_DUMP=/data/wikidb.sql          # or /data/wikidb.sql.gz
+   MW_RESTORE_UPLOADS_ARCHIVE=/data/images.zip  # optional
+   # If DB already has tables and you want to overwrite them, also set:
+   MW_FORCE_DB_RESTORE=1
+   ```
+
+2) Put your files in `./data`:
+   - `./data/wikidb.sql` (or `.sql.gz`)
+   - `./data/images.zip` (or `.tar.gz`/`.tgz`)
+
+3) Start or restart the stack:
+   ```bash
+   docker compose up -d --build
+   ```
+
+What happens on first start (with `MW_RESTORE_ON_INIT=1`):
+- Database restore runs first. If the DB is empty, the dump is imported. If the DB has tables and `MW_FORCE_DB_RESTORE=1`, it will drop/recreate the database before importing.
+- A minimal `LocalSettings.php` (from `data/LocalSettings.upgrade.php`) is copied into place when needed so there is no interactive setup page.
+- `maintenance/update.php` runs to align the schema with this container’s MediaWiki.
+- Uploads archive is extracted into `/var/www/html/images`, permissions are fixed, and image metadata is refreshed.
+- Marker files under `/data` prevent repeated restores on later restarts.
+
+You can also run the restore scripts manually later:
+```bash
+# Restore uploads into the running container
+bash scripts/restore-uploads.sh images.zip
+
+# Restore DB into the running container (stops web first)
+bash scripts/restore-db.sh wikidb.sql
+```
+
+## Localization quirks: Chinese File aliases
+
+This stack adds namespace aliases so that pages using Chinese file prefixes render correctly:
+- `[[檔案:…]]`, `[[文件:…]]` → `File:` namespace
+
+If you have other localized prefixes (e.g., categories), we can add similar aliases.
+
 ## What’s in the stack
 - `mediawiki` service: custom image based on `mediawiki:1.41`, plus system tools for PdfHandler and Composer. Extensions are cloned/installed during image build.
   - Includes `librsvg2-bin` for high‑quality SVG rasterization via `rsvg-convert`.
