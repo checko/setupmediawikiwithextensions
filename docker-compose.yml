@@ -31,6 +31,11 @@ services:
       - MW_DB_PASS=${MW_DB_PASS:-wiki_pass}
       - MW_DB_ROOT_PASSWORD=${MW_DB_ROOT_PASSWORD:-root_pass}
       - MW_SITE_SERVER=${MW_SITE_SERVER:-http://localhost:9090}
+      # Auto-restore toggles and paths (mounted under /data)
+      - MW_RESTORE_ON_INIT=${MW_RESTORE_ON_INIT:-0}
+      - MW_RESTORE_DB_DUMP=${MW_RESTORE_DB_DUMP:-}
+      - MW_RESTORE_UPLOADS_ARCHIVE=${MW_RESTORE_UPLOADS_ARCHIVE:-}
+      - MW_FORCE_DB_RESTORE=${MW_FORCE_DB_RESTORE:-0}
     volumes:
       - wiki_images:/var/www/html/images
       - ./data:/data

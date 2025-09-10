@@ -386,6 +386,18 @@ if [ -f /data/LocalSettings.php ] && ! grep -q "\$wgTmhEnableMp4Uploads" /data/L
   cp -f /data/LocalSettings.php LocalSettings.php
 fi
 
+# Add Chinese aliases for File namespace so [[檔案:...]] / [[文件:...]] links work
+if [ -f /data/LocalSettings.php ] && ! grep -q "\$wgNamespaceAliases\['檔案'\]" /data/LocalSettings.php; then
+  echo "[init] Adding Chinese aliases for File namespace (檔案/文件)"
+  cat >> /data/LocalSettings.php <<'PHP'
+$wgNamespaceAliases['檔案'] = NS_FILE;        // zh-hant
+$wgNamespaceAliases['文件'] = NS_FILE;        // zh-hans
+$wgNamespaceAliases['檔案討論'] = NS_FILE_TALK;
+$wgNamespaceAliases['文件討論'] = NS_FILE_TALK;
+PHP
+  cp -f /data/LocalSettings.php LocalSettings.php
+fi
+
 # Optional: Enable ResourceLoader debug (disables JS minification)
 if [ "${MW_RL_DEBUG}" = "1" ] && [ -f /data/LocalSettings.php ] && ! grep -q "^\$wgResourceLoaderDebug\b" /data/LocalSettings.php; then
   echo "[init] Enabling ResourceLoader debug mode"

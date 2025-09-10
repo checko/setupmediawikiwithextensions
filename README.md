@@ -119,6 +119,20 @@ On first run, the container auto-installs MediaWiki even if a prior `LocalSettin
   - `docker compose down -v`
   - To also remove images for a clean rebuild: `docker compose down -v --rmi all --remove-orphans && docker compose build --no-cache && docker compose up -d`
 
+### Restore Database
+- Scripted restore (stops web, backs up current DB, imports dump, runs update):
+  - `bash scripts/restore-db.sh ./wikidb.sql`
+  - Supports `.sql` and `.sql.gz`. Adjust path to your dump file.
+- Manual restore (no script):
+  - Stop web to avoid writes: `docker compose stop mediawiki`
+  - Optional backup: `docker compose exec -T db sh -lc "mysqldump -u root -p'$MW_DB_ROOT_PASSWORD' '$MW_DB_NAME'" > data/backup-$(date +%Y%m%d-%H%M%S).sql`
+  - Import: `docker compose exec -T db sh -lc "mysql -u root -p'$MW_DB_ROOT_PASSWORD' '$MW_DB_NAME'" < ./wikidb.sql`
+  - Run MW updates: `docker compose exec mediawiki php maintenance/update.php --quick`
+  - Start web: `docker compose start mediawiki`
+- If your dump contains `CREATE DATABASE`/`USE` statements for a different DB name, strip or replace them so the import targets `$MW_DB_NAME` (default `wikidb`).
+- Restoring uploads: DB restore does not include files. To restore images, copy the prior wiki’s `images/` directory into the `wiki_images` volume (e.g., `docker compose cp /path/to/images/. mediawiki:/var/www/html/images/`).
+- Older-than-1.35 dumps: see `docs/RESTORE-DB.md` for the 1.35 intermediate upgrade step and a fix for a common SMW actor conflict.
+
 ## Troubleshooting
 - Blank/failed VE edits: ensure `MW_SITE_SERVER` matches how you access the wiki (scheme/host/port).
 - PDF thumbnails/text extract missing: ensure ImageMagick, Ghostscript, Poppler are installed (baked into image). For very large PDFs, resource limits may apply.
@@ -134,6 +148,11 @@ On first run, the container auto-installs MediaWiki even if a prior `LocalSettin
     - `docker compose exec mediawiki php extensions/SemanticMediaWiki/maintenance/setupStore.php`
     - then `docker compose exec mediawiki php maintenance/update.php --quick`
   - The init script uses `$smwgNamespace = parse_url( $wgServer, PHP_URL_HOST );` (no `enableSemantics()` call needed).
+
+### International namespace aliases (Chinese “檔案/文件”)
+- If pages from an older Chinese wiki contain image links like `[[檔案:xxx.jpg]]` (Traditional) or `[[文件:xxx.jpg]]` (Simplified) but your new site language is English, those links may not resolve by default.
+- The init script now adds namespace aliases so both `檔案` and `文件` map to `NS_FILE`, and their talk pages to `NS_FILE_TALK`. No page edits are required.
+- To customize or add more aliases, edit `scripts/init-mediawiki.sh` and append to `$wgNamespaceAliases` in the block labeled “Adding Chinese aliases for File namespace”. Recreate the stack afterwards: `docker compose up -d --build --force-recreate`.
 
 ## Verifying Extensions
 See `docs/extension-checks.md` for quick ways to verify each extension is enabled and working, including example SMW queries and Mermaid blocks.
