@@ -27,6 +27,7 @@ cd "${MW_DIR}"
 : "${MW_RESTORE_DB_DUMP:=}"
 : "${MW_RESTORE_UPLOADS_ARCHIVE:=}"
 : "${MW_FORCE_DB_RESTORE:=0}"
+: "${MW_ZIP_ENCODING:=}"
 
 echo "[init] Waiting for database at ${MW_DB_HOST}..."
 until mysqladmin ping -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --silent; do
@@ -111,8 +112,20 @@ do_auto_restore() {
         cp -a "$TARGET" "${TARGET}.bak-${ts}"
       fi
       case "$base" in
-        *.tar.gz|*.tgz) tar -xzf "${MW_RESTORE_UPLOADS_ARCHIVE}" -C "$WORK" ;;
-        *.zip)          unzip -q -o "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK" ;;
+        *.tar.gz|*.tgz)
+          tar -xzf "${MW_RESTORE_UPLOADS_ARCHIVE}" -C "$WORK" ;;
+        *.zip)
+          if [ -n "$MW_ZIP_ENCODING" ]; then
+            echo "[restore:init] Attempting unzip with encoding: $MW_ZIP_ENCODING"
+            if unzip -hh 2>/dev/null | grep -q "-I CHARSET"; then
+              unzip -q -I "$MW_ZIP_ENCODING" "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK" || unzip -q -o "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK"
+            else
+              echo "[restore:init] Warning: unzip in container lacks -I encoding support; extracting without encoding hint (filenames may break). Prefer tar.gz or run scripts/restore-uploads.sh --zip-encoding on host."
+              unzip -q -o "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK"
+            fi
+          else
+            unzip -q -o "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK"
+          fi ;;
         *) echo "[restore:init] Unsupported uploads archive extension: $base" ;;
       esac
       copied=0

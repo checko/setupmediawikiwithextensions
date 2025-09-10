@@ -66,7 +66,9 @@ What happens on first start (with `MW_RESTORE_ON_INIT=1`):
 You can also run the restore scripts manually later:
 ```bash
 # Restore uploads into the running container
-bash scripts/restore-uploads.sh images.zip
+bash scripts/restore-uploads.sh images.zip                    # default
+bash scripts/restore-uploads.sh images.zip --zip-encoding cp950  # preserve Traditional Chinese names
+bash scripts/restore-uploads.sh images.zip --zip-encoding gbk    # preserve Simplified Chinese names
 
 # Restore DB into the running container (stops web first)
 bash scripts/restore-db.sh wikidb.sql
@@ -81,6 +83,11 @@ If you have other localized prefixes (e.g., categories), we can add similar alia
 
 ## Export from another server
 See docs/EXPORT-SOURCE.md for step‑by‑step commands to dump the DB and archive the `images/` folder from a source server (bare‑metal or Docker), transfer them, and restore here.
+
+### ZIP filename encodings
+- ZIP archives don’t always store filenames as UTF‑8. If your source ZIP was made on Windows or old tools, pass `--zip-encoding` when using `scripts/restore-uploads.sh` (e.g., `cp950` or `gbk`).
+- For automated restore at startup, set `MW_ZIP_ENCODING=cp950` (or `gbk`) in `.env`.
+- Prefer `tar.gz` for future transfers to avoid encoding issues entirely.
 
 ## What’s in the stack
 - `mediawiki` service: custom image based on `mediawiki:1.41`, plus system tools for PdfHandler and Composer. Extensions are cloned/installed during image build.
