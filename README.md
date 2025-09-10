@@ -79,6 +79,9 @@ This stack adds namespace aliases so that pages using Chinese file prefixes rend
 
 If you have other localized prefixes (e.g., categories), we can add similar aliases.
 
+## Export from another server
+See docs/EXPORT-SOURCE.md for step‑by‑step commands to dump the DB and archive the `images/` folder from a source server (bare‑metal or Docker), transfer them, and restore here.
+
 ## What’s in the stack
 - `mediawiki` service: custom image based on `mediawiki:1.41`, plus system tools for PdfHandler and Composer. Extensions are cloned/installed during image build.
   - Includes `librsvg2-bin` for high‑quality SVG rasterization via `rsvg-convert`.
