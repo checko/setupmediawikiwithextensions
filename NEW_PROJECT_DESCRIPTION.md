@@ -12,7 +12,7 @@ Deliver a turnkey MediaWiki environment that teams can spin up in minutes for kn
 - **Operator ergonomics:** Document every workflow (backup, restore, extension checks, debugging) and expose toggles through `.env` rather than code edits.
 
 ## Stack Components
-- `mediawiki` service: Custom image based on `mediawiki:1.41` built from `Dockerfile.mediawiki`.
+- `mediawiki` service: Custom image based on `mediawiki:1.43` (LTS) built from `Dockerfile.mediawiki`.
   - Installs tooling (ffmpeg, ImageMagick, Ghostscript, Poppler, librsvg, MariaDB client, Composer, Pygments) plus fonts for multilingual thumbnails.
   - Clones extension sources at build time and vendors Semantic MediaWiki + getID3.
   - Overlays the Mermaid extension so ResourceLoader ships only a lightweight initializer (`patches/ext.mermaid.init.js`) while the v10.9.1 library loads from `/extensions/Mermaid/resources/mermaid.min.js`.
