@@ -90,7 +90,18 @@ COPY scripts/init-mediawiki.sh /usr/local/bin/init-mediawiki.sh
 RUN chmod +x /usr/local/bin/init-mediawiki.sh
 
 # Minimal LocalSettings stub used during restores/legacy upgrades
+RUN mkdir -p /opt/mediawiki
 COPY templates/LocalSettings.minimal.php /opt/mediawiki/LocalSettings.minimal.php
+
+# Bundle MediaWiki 1.35 maintenance scripts for automatic intermediate upgrades
+ARG MW_135_VERSION=1.35.13
+RUN set -eux; \
+    curl -fsSL "https://releases.wikimedia.org/mediawiki/1.35/mediawiki-${MW_135_VERSION}.tar.gz" -o /tmp/mediawiki-1.35.tar.gz; \
+    mkdir -p /opt; \
+    tar -xzf /tmp/mediawiki-1.35.tar.gz -C /opt; \
+    mv /opt/mediawiki-${MW_135_VERSION} /opt/mediawiki-1.35; \
+    rm -f /tmp/mediawiki-1.35.tar.gz; \
+    rm -rf /opt/mediawiki-1.35/cache
 
 # Start Apache after init
 CMD ["/usr/local/bin/init-mediawiki.sh"]

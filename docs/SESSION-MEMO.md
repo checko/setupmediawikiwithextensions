@@ -19,7 +19,7 @@ Status
 - Docs/Tools added:
   - `scripts/restore-db.sh` (import + backup + update)
   - `docs/RESTORE-DB.md` (full guide, incl. 1.35 step and SMW fix)
-  - `templates/LocalSettings.minimal.php` (minimal config for the 1.35 updater)
+  - `templates/LocalSettings.minimal.php` (minimal config used by the automated 1.35 intermediate updater)
 
 Uploads Restore
 

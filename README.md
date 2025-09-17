@@ -59,7 +59,7 @@ Place your dump/archive files in `./data` and enable one-time restore on init vi
 What happens on first start (with `MW_RESTORE_ON_INIT=1`):
 - Database restore runs first. If the DB is empty, the dump is imported. If the DB has tables and `MW_FORCE_DB_RESTORE=1`, it will drop/recreate the database before importing.
 - A minimal `LocalSettings.php` (seeded from `templates/LocalSettings.minimal.php` inside the image) is copied into place when needed so there is no interactive setup page.
-- `maintenance/update.php` runs to align the schema with this container’s MediaWiki.
+- `maintenance/update.php` runs to align the schema with this container’s MediaWiki. If the imported database predates MediaWiki 1.35, the container automatically runs the bundled MediaWiki 1.35 updater first, then re-runs the 1.41 updater.
 - Uploads archive is extracted into `/var/www/html/images`, permissions are fixed, and image metadata is refreshed.
 - Marker files under `/data` prevent repeated restores on later restarts.
 

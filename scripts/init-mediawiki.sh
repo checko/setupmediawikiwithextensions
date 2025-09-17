@@ -4,6 +4,12 @@ set -euo pipefail
 MW_DIR="/var/www/html"
 cd "${MW_DIR}"
 
+# Paths for legacy upgrade support
+MW_LEGACY_PATH="/opt/mediawiki-1.35"
+MW_MINIMAL_SETTINGS="/opt/mediawiki/LocalSettings.minimal.php"
+
+NEED_EXTENSION_BOOTSTRAP=0
+
 # Defaults if not provided via environment
 : "${MW_SITE_NAME:=MyWiki}"
 : "${MW_LANG:=en}"
@@ -47,6 +53,102 @@ normalize_bool() {
     1|true|TRUE|True|yes|YES|on|ON) echo 1 ;;
     *) echo 0 ;;
   esac
+}
+
+run_update_with_legacy_support() {
+  local conf_file="${1:-LocalSettings.php}"
+  local log_file
+  log_file=$(mktemp /tmp/update.log.XXXXXX)
+  echo "[update] Running maintenance/update.php --quick"
+  set +e
+  php maintenance/update.php --quick --conf "$conf_file" 2>&1 | tee "$log_file"
+  local status=${PIPESTATUS[0]}
+  set -e
+  if [ "$status" -eq 0 ]; then
+    rm -f "$log_file"
+    return 0
+  fi
+
+  if grep -q "Can not upgrade from versions older than 1.35" "$log_file"; then
+    if [ -x "${MW_LEGACY_PATH}/maintenance/update.php" ]; then
+      echo "[upgrade:pre135] Detected pre-1.35 database. Running intermediate upgrade via MediaWiki 1.35..."
+      local temp_conf="/tmp/LocalSettings.pre135.php"
+      if [ -f "$MW_MINIMAL_SETTINGS" ]; then
+        cp -f "$MW_MINIMAL_SETTINGS" "$temp_conf"
+      else
+        cp -f "$conf_file" "$temp_conf"
+      fi
+      set +e
+      MW_INSTALL_PATH="$MW_LEGACY_PATH" php "${MW_LEGACY_PATH}/maintenance/update.php" --quick --conf "$temp_conf" 2>&1 | tee "$log_file"
+      status=${PIPESTATUS[0]}
+      set -e
+      rm -f "$temp_conf"
+      if [ "$status" -eq 0 ]; then
+        echo "[upgrade:pre135] Intermediate upgrade complete. Re-running MediaWiki 1.41 updater..."
+        set +e
+        php maintenance/update.php --quick --conf "$conf_file" 2>&1 | tee "$log_file"
+        status=${PIPESTATUS[0]}
+        set -e
+      fi
+    else
+      echo "[upgrade:pre135] Warning: MediaWiki 1.35 assets missing; unable to perform automatic intermediate upgrade." >&2
+    fi
+  fi
+
+  if [ "$status" -ne 0 ]; then
+    echo "[update] maintenance/update.php failed (status $status)." >&2
+    cat "$log_file" >&2
+  fi
+  rm -f "$log_file"
+  return "$status"
+}
+
+append_custom_extensions() {
+  if [ -f /data/LocalSettings.php ] && ! grep -q "# BEGIN: custom extensions" /data/LocalSettings.php; then
+    echo "[init] Appending custom extension configuration to LocalSettings.php..."
+    cat >> /data/LocalSettings.php <<'PHP'
+
+# BEGIN: custom extensions
+wfLoadExtension( 'WikiEditor' );
+wfLoadExtension( 'CodeEditor' );
+wfLoadExtension( 'PdfHandler' );
+wfLoadExtension( 'MultimediaViewer' );
+wfLoadExtension( 'MsUpload' );
+wfLoadExtension( 'VisualEditor' );
+wfLoadExtension( 'TimedMediaHandler' );
+wfLoadExtension( 'SyntaxHighlight_GeSHi' );
+wfLoadExtension( 'WikiMarkdown' );
+
+$wgEnableUploads = true;
+$wgUseImageMagick = true;
+$wgImageMagickConvertCommand = '/usr/bin/convert';
+$wgFileExtensions[] = 'pdf';
+$wgFileExtensions[] = 'mp4';
+$wgFileExtensions[] = 'avi';
+$wgFileExtensions[] = 'mkv';
+
+# Allow larger uploads to match PHP limits
+$wgMaxUploadSize = 1024 * 1024 * 1024; // 1 GiB
+
+# VisualEditor defaults
+$wgDefaultUserOptions['visualeditor-enable'] = 1;
+$wgDefaultUserOptions['visualeditor-editor'] = 'visualeditor';
+
+# MsUpload: allow registered users to upload
+$wgGroupPermissions['user']['upload'] = true;
+# TimedMediaHandler config (basic playback, no transcode by default)
+$wgFFmpegLocation = '/usr/bin/ffmpeg';
+$wgTmhEnableTranscode = false;
+$wgTmhEnableMp4Uploads = true;
+# Ensure getID3 library is available for media metadata
+if ( file_exists( __DIR__ . '/vendor/getid3/getid3/getid3.php' ) ) {
+    require_once __DIR__ . '/vendor/getid3/getid3/getid3.php';
+}
+# END: custom extensions
+PHP
+    cp -f /data/LocalSettings.php LocalSettings.php
+    run_update_with_legacy_support /data/LocalSettings.php || true
+  fi
 }
 
 # Perform optional one-time DB and uploads restore from /data paths
@@ -133,7 +235,9 @@ PHP
       if [ -f /data/LocalSettings.php ]; then
         cp -f /data/LocalSettings.php LocalSettings.php
         echo "[restore:init] Running maintenance/update.php after DB import..."
-        php maintenance/update.php --quick || true
+        if run_update_with_legacy_support /data/LocalSettings.php; then
+          NEED_EXTENSION_BOOTSTRAP=1
+        fi
       fi
       date > "$marker"
     else
@@ -340,52 +444,9 @@ PHP
   php maintenance/update.php --quick
 fi
 
-# Ensure custom extension config block exists even if using a pre-existing LocalSettings.php
-if [ -f /data/LocalSettings.php ] && ! grep -q "# BEGIN: custom extensions" /data/LocalSettings.php; then
-  echo "[init] Appending custom extension configuration to LocalSettings.php..."
-  cat >> /data/LocalSettings.php <<'PHP'
-
-# BEGIN: custom extensions
-wfLoadExtension( 'WikiEditor' );
-wfLoadExtension( 'CodeEditor' );
-wfLoadExtension( 'PdfHandler' );
-wfLoadExtension( 'MultimediaViewer' );
-wfLoadExtension( 'MsUpload' );
-wfLoadExtension( 'VisualEditor' );
-wfLoadExtension( 'TimedMediaHandler' );
-wfLoadExtension( 'SyntaxHighlight_GeSHi' );
-wfLoadExtension( 'WikiMarkdown' );
-
-$wgEnableUploads = true;
-$wgUseImageMagick = true;
-$wgImageMagickConvertCommand = '/usr/bin/convert';
-$wgFileExtensions[] = 'pdf';
-$wgFileExtensions[] = 'mp4';
-$wgFileExtensions[] = 'avi';
-$wgFileExtensions[] = 'mkv';
-
-# Allow larger uploads to match PHP limits
-$wgMaxUploadSize = 1024 * 1024 * 1024; // 1 GiB
-
-# VisualEditor defaults
-$wgDefaultUserOptions['visualeditor-enable'] = 1;
-$wgDefaultUserOptions['visualeditor-editor'] = 'visualeditor';
-
-# MsUpload: allow registered users to upload
-$wgGroupPermissions['user']['upload'] = true;
-# TimedMediaHandler config (basic playback, no transcode by default)
-$wgFFmpegLocation = '/usr/bin/ffmpeg';
-$wgTmhEnableTranscode = false;
-$wgTmhEnableMp4Uploads = true;
-# Ensure getID3 library is available for media metadata
-if ( file_exists( __DIR__ . '/vendor/getid3/getid3/getid3.php' ) ) {
-    require_once __DIR__ . '/vendor/getid3/getid3/getid3.php';
-}
-# END: custom extensions
-PHP
-  # Keep webroot in sync
-  cp -f /data/LocalSettings.php LocalSettings.php
-  php maintenance/update.php --quick || true
+if [ "$NEED_EXTENSION_BOOTSTRAP" = "1" ]; then
+  append_custom_extensions
+  NEED_EXTENSION_BOOTSTRAP=0
 fi
 
 # Ensure SMW installed/enabled per env toggle (runs on every start)

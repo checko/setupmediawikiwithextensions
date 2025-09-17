@@ -33,7 +33,7 @@ The script:
 Afterwards: open your wiki and log in using the admin from the source wiki.
 
 ## If updater says “Cannot upgrade from versions older than 1.35”
-Your dump is from a MediaWiki version older than 1.35. Do an intermediate schema upgrade using the official `mediawiki:1.35` image, then finalize on 1.41.
+The stack now bundles MediaWiki 1.35 and will automatically run the intermediate updater when it detects this condition. You should only need the manual steps below if you want to re-run the process yourself (for example, after customizing `LocalSettings.php`).
 
 1) Stop web (DB stays up):
 
