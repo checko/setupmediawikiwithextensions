@@ -197,3 +197,39 @@ Troubleshooting
 - Missing originals: ensure your archive contains the full `images/` tree (not only `images/thumb/`). Originals live directly under hashed paths like `images/a/ab/Filename.png`.
 - Very large sets: the refresh scripts may take time; they are safe to re-run.
 - Do not use `maintenance/importImages.php` unless the DB truly lacks file rows; it creates new DB entries and can duplicate existing files.
+
+### ZIP archives with non-UTF-8 filenames
+- Set `MW_ZIP_ENCODING` in `.env` (for example `cp950` or `gbk`) before starting the stack so the init script can hint the correct encoding during extraction.
+- Both the startup restore and `scripts/restore-uploads.sh` automatically translate `#Uxxxx`/`#Lxxxxxx` escape sequences into real Unicode characters after extraction, so filenames like `螢幕擷取畫面_2025-09-03_125009.png` work without manual renaming.
+- To re-run the normalization on an existing stack, execute:
+
+  ```
+  docker compose exec mediawiki python3 - <<'PY'
+  import os, re
+  root = '/var/www/html/images'
+  pattern = re.compile(r'#([UL])([0-9A-Fa-f]{4,6})')
+
+  def decode(name):
+      if '#U' not in name and '#L' not in name:
+          return name
+      def repl(match):
+          try:
+              return chr(int(match.group(2), 16))
+          except ValueError:
+              return match.group(0)
+      return pattern.sub(repl, name)
+
+  for dirpath, dirnames, filenames in os.walk(root, topdown=False):
+      for entry in dirnames + filenames:
+          new_name = decode(entry)
+          if new_name != entry:
+              src = os.path.join(dirpath, entry)
+              dst = os.path.join(dirpath, new_name)
+              base, ext = os.path.splitext(dst)
+              counter = 1
+              while os.path.exists(dst):
+                  dst = f"{base}_{counter}{ext}"
+                  counter += 1
+              os.rename(src, dst)
+  PY
+  ```

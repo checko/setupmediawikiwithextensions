@@ -61,6 +61,7 @@ What happens on first start (with `MW_RESTORE_ON_INIT=1`):
 - A minimal `LocalSettings.php` (seeded from `templates/LocalSettings.minimal.php` inside the image) is copied into place when needed so there is no interactive setup page.
 - `maintenance/update.php` runs to align the schema with this container’s MediaWiki. If the imported database predates MediaWiki 1.35, the container automatically runs the bundled MediaWiki 1.35 updater first, then re-runs the 1.41 updater.
 - Uploads archive is extracted into `/var/www/html/images`, permissions are fixed, and image metadata is refreshed.
+- If the uploads archive is a ZIP and uses a non‑UTF‑8 code page, set `MW_ZIP_ENCODING` (for example `cp950` or `gbk`). The init script automatically re-encodes any `#Uxxxx`-style filenames so Chinese/Unicode names render correctly.
 - Marker files under `/data` prevent repeated restores on later restarts.
 
 You can also run the restore scripts manually later:
