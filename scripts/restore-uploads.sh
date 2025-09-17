@@ -108,6 +108,35 @@ if [[ "$TYPE" == zip && -n "$ZIP_ENCODING" ]]; then
       echo \"Detected layout: hashed subdirs at root\"; \
       cp -a \"\$WORK\"/. \"\$TARGET\"/; copied=1; \
     fi; \
+    if [ \"\$copied\" -eq 1 ]; then \
+      echo 'Normalizing escaped Unicode filenames'; \
+      python3 - "$TARGET" <<'PY' \
+import os, sys, re \
+root = sys.argv[1] \
+pattern = re.compile(r'#([UL])([0-9A-Fa-f]{4,6})') \
+def decode(name): \
+    if '#U' not in name and '#L' not in name: \
+        return name \
+    def repl(match): \
+        try: \
+            return chr(int(match.group(2), 16)) \
+        except ValueError: \
+            return match.group(0) \
+    return pattern.sub(repl, name) \
+for dirpath, dirnames, filenames in os.walk(root, topdown=False): \
+    for entry in dirnames + filenames: \
+        new_name = decode(entry) \
+        if new_name != entry: \
+            src = os.path.join(dirpath, entry) \
+            dst = os.path.join(dirpath, new_name) \
+            base, ext = os.path.splitext(dst) \
+            counter = 1 \
+            while os.path.exists(dst): \
+                dst = f"{base}_{counter}{ext}" \
+                counter += 1 \
+            os.rename(src, dst) \
+PY \
+    fi; \
     echo 'Fixing ownership and permissions'; \
     chown -R www-data:www-data \"\$TARGET\"; \
     find \"\$TARGET\" -type d -exec chmod 755 {} +; \
@@ -134,7 +163,11 @@ else
     if [ \"\$TYPE\" = tar ]; then \
       tar -xzf \"\$ARCH\" -C \"\$WORK\"; \
     else \
-      unzip -q -o \"\$ARCH\" -d \"\$WORK\" || echo 'unzip returned non-zero; continuing'; \
+      if unzip -hh 2>/dev/null | grep -q "-O CHARSET" && [ -n \"$ZIP_ENCODING\" ]; then \
+        unzip -q -O \"$ZIP_ENCODING\" \"\$ARCH\" -d \"\$WORK\" || unzip -q -o \"\$ARCH\" -d \"\$WORK\"; \
+      else \
+        unzip -q -o \"\$ARCH\" -d \"\$WORK\" || echo 'unzip returned non-zero; continuing'; \
+      fi; \
     fi; \
     copied=0; \
     for d in \"\$WORK\"/mediawiki-*/images; do \
@@ -150,6 +183,35 @@ else
     if [ \"\$copied\" -eq 0 ]; then \
       echo \"Detected layout: hashed subdirs at root\"; \
       cp -a \"\$WORK\"/. \"\$TARGET\"/; copied=1; \
+    fi; \
+    if [ \"\$copied\" -eq 1 ]; then \
+      echo 'Normalizing escaped Unicode filenames'; \
+      python3 - \"\$TARGET\" <<'PY'; \
+import os, sys, re \
+root = sys.argv[1] \
+pattern = re.compile(r'#([UL])([0-9A-Fa-f]{4,6})') \
+def decode(name): \
+    if '#U' not in name and '#L' not in name: \
+        return name \
+    def repl(match): \
+        try: \
+            return chr(int(match.group(2), 16)) \
+        except ValueError: \
+            return match.group(0) \
+    return pattern.sub(repl, name) \
+for dirpath, dirnames, filenames in os.walk(root, topdown=False): \
+    for entry in dirnames + filenames: \
+        new_name = decode(entry) \
+        if new_name != entry: \
+            src = os.path.join(dirpath, entry) \
+            dst = os.path.join(dirpath, new_name) \
+            base, ext = os.path.splitext(dst) \
+            counter = 1 \
+            while os.path.exists(dst): \
+                dst = f"{base}_{counter}{ext}" \
+                counter += 1 \
+            os.rename(src, dst) \
+PY \
     fi; \
     echo 'Fixing ownership and permissions'; \
     chown -R www-data:www-data \"\$TARGET\"; \

@@ -55,6 +55,41 @@ normalize_bool() {
   esac
 }
 
+normalize_unicode_escape_names() {
+  python3 - "$1" <<'PY'
+import os
+import sys
+import re
+
+root = sys.argv[1]
+pattern = re.compile(r'#([UL])([0-9A-Fa-f]{4,6})')
+
+def decode(name: str) -> str:
+    def repl(match: re.Match[str]) -> str:
+        code = match.group(2)
+        try:
+            return chr(int(code, 16))
+        except ValueError:
+            return match.group(0)
+    if '#U' in name or '#L' in name:
+        return pattern.sub(repl, name)
+    return name
+
+for dirpath, dirnames, filenames in os.walk(root, topdown=False):
+    for entry in dirnames + filenames:
+        new_name = decode(entry)
+        if new_name != entry:
+            src = os.path.join(dirpath, entry)
+            dst = os.path.join(dirpath, new_name)
+            counter = 1
+            base, ext = os.path.splitext(dst)
+            while os.path.exists(dst):
+                dst = f"{base}_{counter}{ext}"
+                counter += 1
+            os.rename(src, dst)
+PY
+}
+
 run_update_with_legacy_support() {
   local conf_file="${1:-LocalSettings.php}"
   local log_file
@@ -266,10 +301,10 @@ PHP
         *.zip)
           if [ -n "$MW_ZIP_ENCODING" ]; then
             echo "[restore:init] Attempting unzip with encoding: $MW_ZIP_ENCODING"
-            if unzip -hh 2>/dev/null | grep -q "-I CHARSET"; then
-              unzip -q -I "$MW_ZIP_ENCODING" "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK" || unzip -q -o "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK"
+            if unzip -hh 2>/dev/null | grep -q "-O CHARSET"; then
+              unzip -q -O "$MW_ZIP_ENCODING" "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK" || unzip -q -o "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK"
             else
-              echo "[restore:init] Warning: unzip in container lacks -I encoding support; extracting without encoding hint (filenames may break). Prefer tar.gz or run scripts/restore-uploads.sh --zip-encoding on host."
+              echo "[restore:init] Warning: unzip in container lacks -O encoding support; extracting without encoding hint (filenames may break). Prefer tar.gz or run scripts/restore-uploads.sh --zip-encoding on host."
               unzip -q -o "${MW_RESTORE_UPLOADS_ARCHIVE}" -d "$WORK"
             fi
           else
@@ -294,6 +329,10 @@ PHP
         echo "[restore:init] Detected layout: hashed subdirs at root"
         cp -a "$WORK"/. "$TARGET"/
         copied=1
+      fi
+      if [ "$copied" -eq 1 ]; then
+        echo "[restore:init] Normalizing escaped Unicode filenames"
+        normalize_unicode_escape_names "$TARGET"
       fi
       echo "[restore:init] Fixing ownership and permissions"
       chown -R www-data:www-data "$TARGET"
