@@ -43,7 +43,7 @@ docker compose stop mediawiki
 
 2) Run MW 1.35 updater on the same compose network using a minimal LocalSettings:
 
-- A ready-to-use file is included: `data/LocalSettings.upgrade.php` (loads no extensions).
+- A ready-to-use file is included: `templates/LocalSettings.minimal.php` (loads no extensions). Copy it into `./data/LocalSettings.php` if you want to inspect or tweak it before running the updater.
 - Detect compose network (usually `<folder>_default`):
 
 ```
@@ -61,7 +61,7 @@ docker run --rm \
   -e MW_DB_USER="$(grep -E '^MW_DB_USER=' .env | sed 's/^MW_DB_USER=//')" \
   -e MW_DB_PASS="$(grep -E '^MW_DB_PASS=' .env | sed 's/^MW_DB_PASS=//')" \
   -e MW_SITE_SERVER="$(grep -E '^MW_SITE_SERVER=' .env | sed 's/^MW_SITE_SERVER=//')" \
-  -v "$PWD/data/LocalSettings.upgrade.php:/var/www/html/LocalSettings.php:ro" \
+  -v "$PWD/templates/LocalSettings.minimal.php:/var/www/html/LocalSettings.php:ro" \
   mediawiki:1.35 php maintenance/update.php --quick
 ```
 

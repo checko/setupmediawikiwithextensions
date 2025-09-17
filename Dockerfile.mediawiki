@@ -89,5 +89,8 @@ RUN set -eux; \
 COPY scripts/init-mediawiki.sh /usr/local/bin/init-mediawiki.sh
 RUN chmod +x /usr/local/bin/init-mediawiki.sh
 
+# Minimal LocalSettings stub used during restores/legacy upgrades
+COPY templates/LocalSettings.minimal.php /opt/mediawiki/LocalSettings.minimal.php
+
 # Start Apache after init
 CMD ["/usr/local/bin/init-mediawiki.sh"]

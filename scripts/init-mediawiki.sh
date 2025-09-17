@@ -83,7 +83,52 @@ do_auto_restore() {
       # Ensure a LocalSettings.php exists to run update.php (use minimal one if none provided)
       if [ ! -f /data/LocalSettings.php ]; then
         echo "[restore:init] Seeding LocalSettings.php from minimal upgrade config"
-        cp -f /data/LocalSettings.upgrade.php /data/LocalSettings.php || true
+        if [ -f /data/LocalSettings.upgrade.php ]; then
+          cp -f /data/LocalSettings.upgrade.php /data/LocalSettings.php || true
+        elif [ -f /opt/mediawiki/LocalSettings.minimal.php ]; then
+          cp -f /opt/mediawiki/LocalSettings.minimal.php /data/LocalSettings.php
+        else
+          cat <<'PHP' > /data/LocalSettings.php
+<?php
+if ( !defined( 'MEDIAWIKI' ) ) {
+    exit;
+}
+
+$wgSitename = getenv( 'MW_SITE_NAME' ) ?: 'MyWiki';
+$wgMetaNamespace = str_replace( ' ', '_', $wgSitename );
+$wgServer = rtrim( getenv( 'MW_SITE_SERVER' ) ?: 'http://localhost:9090', '/' );
+$wgScriptPath = '';
+$wgResourceBasePath = $wgScriptPath;
+$wgArticlePath = '/$1';
+
+$wgEmergencyContact = 'admin@example.com';
+$wgPasswordSender = 'admin@example.com';
+$wgEnotifUserTalk = false;
+$wgEnotifWatchlist = false;
+$wgEmailAuthentication = false;
+
+$wgDBtype = 'mysql';
+$wgDBserver = getenv( 'MW_DB_HOST' ) ?: 'db';
+$wgDBname = getenv( 'MW_DB_NAME' ) ?: 'wikidb';
+$wgDBuser = getenv( 'MW_DB_USER' ) ?: 'wiki';
+$wgDBpassword = getenv( 'MW_DB_PASS' ) ?: 'wiki_pass';
+$wgDBprefix = '';
+$wgDBTableOptions = 'ENGINE=InnoDB, DEFAULT CHARSET=binary';
+
+$wgLanguageCode = getenv( 'MW_LANG' ) ?: 'en';
+$wgDefaultSkin = 'vector';
+$wgEnableUploads = true;
+
+$wgSecretKey = getenv( 'MW_SECRET_KEY' ) ?: 'change-me-secret-key';
+$wgUpgradeKey = getenv( 'MW_UPGRADE_KEY' ) ?: 'change-me-upgrade-key';
+
+$wgMainCacheType = CACHE_NONE;
+$wgParserCacheType = CACHE_NONE;
+$wgCacheDirectory = false;
+
+wfLoadSkin( 'Vector' );
+PHP
+        fi
       fi
       if [ -f /data/LocalSettings.php ]; then
         cp -f /data/LocalSettings.php LocalSettings.php
