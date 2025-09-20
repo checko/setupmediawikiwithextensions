@@ -94,6 +94,7 @@ See docs/EXPORT-SOURCE.md for step‑by‑step commands to dump the DB and archi
 - `mediawiki` service: custom image based on `mediawiki:1.41`, plus system tools for PdfHandler and Composer. Extensions are cloned/installed during image build.
   - Includes `librsvg2-bin` for high‑quality SVG rasterization via `rsvg-convert`.
   - Includes Semantic MediaWiki installed at build time (`extensions/SemanticMediaWiki`).
+  - Bundled skins (`Vector`, `MinervaNeue`, `MonoBook`, `Timeless` — including the Vector 2022 variant) are enabled automatically after the schema is brought up to 1.35+; keep the minimal restore stub at the default so the legacy upgrader can run.
 - `db` service: `mariadb:10.6` with persistent volume.
 - Volumes:
   - Database data in a named volume (`db_data`).

@@ -525,6 +525,13 @@ fi
 
 # Ensure mp4 is allowed and upload size is set even if the custom block already existed
 if [ -f /data/LocalSettings.php ]; then
+  # Ensure bundled skins shipped with MediaWiki 1.41 stay enabled
+  for skin in Vector MinervaNeue MonoBook Timeless; do
+    if ! grep -q "wfLoadSkin( '${skin}'" /data/LocalSettings.php; then
+      echo "[init] Enabling ${skin} skin in LocalSettings.php"
+      echo "wfLoadSkin( '${skin}' );" >> /data/LocalSettings.php
+    fi
+  done
   if ! grep -q "\$wgFileExtensions\[\]\s*=\s*'mp4'" /data/LocalSettings.php; then
     echo "[init] Enabling mp4 uploads in LocalSettings.php"
     echo "\$wgFileExtensions[] = 'mp4';" >> /data/LocalSettings.php

@@ -43,7 +43,7 @@ docker compose stop mediawiki
 
 2) Run MW 1.35 updater on the same compose network using a minimal LocalSettings:
 
-- A ready-to-use file is included: `templates/LocalSettings.minimal.php` (loads no extensions). Copy it into `./data/LocalSettings.php` if you want to inspect or tweak it before running the updater.
+- A ready-to-use file is included: `templates/LocalSettings.minimal.php` (loads only the legacy Vector skin). Copy it into `./data/LocalSettings.php` if you want to inspect or tweak it before running the updater, but avoid enabling newer skins/extensions here—the 1.35 tarball lacks them and the updater will fail.
 - Detect compose network (usually `<folder>_default`):
 
 ```
