@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaWiki 設定說明</title>
+    <style>
+        body { font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif; line-height: 1.6; margin: 20px; }
+        h1, h2 { color: #333; }
+        ul { margin-left: 20px; }
+        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 4px; }
+        pre { background-color: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>設定新 MediaWiki 的簡單步驟</h1>
+    <p>以下是設定新 MediaWiki 的簡單步驟，使用這個專案的說明。請先確認你的電腦已經安裝 Docker 和 Docker Compose。</p>
+
+    <h2>準備工作</h2>
+    <ul>
+        <li>複製環境設定檔案：<code>cp .env.example .env</code></li>
+        <li>編輯 <code>.env</code> 檔案，設定必要的參數：
+            <ul>
+                <li><code>MW_ADMIN_PASS</code>：管理員密碼（預設 <code>changeme123!</code>，請改掉！）</li>
+                <li><code>MW_SITE_SERVER</code>：網站伺服器地址（如果不是 <code>http://localhost:9090</code>，請修改）</li>
+                <li>其他設定如 <code>MW_SITE_NAME</code>、<code>MW_LANG</code> 等，可視需要調整</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h2>啟動步驟</h2>
+    <ol>
+        <li>建置並啟動容器：
+            <pre><code>docker compose up -d --build</code></pre>
+            <p>這會自動下載並安裝 MediaWiki 1.41，包含常用擴充套件（如語意媒體wiki、視覺編輯器等）。</p>
+        </li>
+        <li>開啟瀏覽器，前往 <code>http://localhost:9090</code> 查看你的 wiki 網站。</li>
+        <li>使用管理員帳號登入：
+            <ul>
+                <li>帳號：<code>Admin</code></li>
+                <li>密碼：你在 <code>.env</code> 中設定的 <code>MW_ADMIN_PASS</code></li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2>從現有的 MediaWiki 恢復資料</h2>
+    <p>如果你有一個現有的 MediaWiki 網站，想要將其資料庫和圖片檔案恢復到這個 Docker 環境中，可以按照以下步驟操作：</p>
+
+    <h3>1. 匯出現有資料</h3>
+    <ul>
+        <li><strong>匯出資料庫：</strong>
+            <pre><code>mysqldump -u [使用者名稱] -p[密碼] [資料庫名稱] > wikidb.sql</code></pre>
+        </li>
+        <li><strong>打包圖片檔案：</strong>
+            <pre><code>cd /path/to/old/mediawiki
+tar -czf images.tar.gz images/</code></pre>
+            <p>或者使用 zip：</p>
+            <pre><code>zip -r images.zip images/</code></pre>
+        </li>
+    </ul>
+
+    <h3>2. 放置檔案</h3>
+    <ul>
+        <li>將匯出的 <code>wikidb.sql</code> 檔案放到此專案的 <code>./data</code> 資料夾中</li>
+        <li>將打包的圖片檔案（<code>images.tar.gz</code> 或 <code>images.zip</code>）也放到 <code>./data</code> 資料夾中</li>
+    </ul>
+
+    <h3>3. 設定環境變數</h3>
+    <ul>
+        <li>編輯 <code>.env</code> 檔案，新增或修改以下設定：
+            <pre><code>MW_RESTORE_ON_INIT=1
+MW_RESTORE_DB_DUMP=/data/wikidb.sql
+MW_RESTORE_UPLOADS_ARCHIVE=/data/images.zip</code></pre>
+            <p>如果資料庫已經有資料表且需要覆蓋，請額外添加：</p>
+            <pre><code>MW_FORCE_DB_RESTORE=1</code></pre>
+        </li>
+    </ul>
+
+    <h3>4. 啟動容器</h3>
+    <pre><code>docker compose up -d --build</code></pre>
+    <p>容器啟動時會自動執行恢復程序，將資料庫和圖片檔案匯入到新的環境中。</p>
+
+    <h2>注意事項</h2>
+    <ul>
+        <li>第一次啟動時，系統會自動安裝 MediaWiki，即使有舊的 <code>LocalSettings.php</code> 但資料庫是空的，也會重新安裝並啟用擴充套件。</li>
+        <li>如果需要語意媒體wiki（SMW）的設定，請在登入後檢查並執行維護指令（參見 README 的 Maintenance 部分）。</li>
+        <li>所有資料（資料庫、圖片上傳）會儲存在 Docker 磁碟區中，網站設定檔案會存放在 <code>./data/LocalSettings.php</code>。</li>
+        <li>如果圖片檔案是使用非 UTF-8 編碼（如繁體中文的 cp950），請在 <code>.env</code> 中設定：<code>MW_ZIP_ENCODING=cp950</code></li>
+    </ul>
+
+    <p>如果遇到問題，請檢查 Docker 記錄：<code>docker compose logs -f mediawiki</code>。</p>
+</body>
+</html>
