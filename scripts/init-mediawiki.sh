@@ -435,7 +435,7 @@ if [ ! -f LocalSettings.php ]; then
   # Try to install Semantic MediaWiki via Composer before enabling it
   SMW_OK=0
   echo "[init] Installing Semantic MediaWiki via Composer..."
-  if [ -w composer.json ] && composer --no-interaction --no-progress require "mediawiki/semantic-media-wiki:~4.1"; then
+  if [ -w composer.json ] && composer --no-interaction --no-progress require "mediawiki/semantic-media-wiki:~6.0"; then
     SMW_OK=1
     echo "[init] Semantic MediaWiki installed."
   else
@@ -503,7 +503,7 @@ if [ -f /data/LocalSettings.php ]; then
     # Install SMW code if missing
     if [ ! -f "${MW_DIR}/extensions/SemanticMediaWiki/extension.json" ]; then
       echo "[init] Installing Semantic MediaWiki via Composer (env enabled)..."
-      if ! { [ -w composer.json ] && composer --no-interaction --no-progress require "mediawiki/semantic-media-wiki:~4.1"; }; then
+      if ! { [ -w composer.json ] && composer --no-interaction --no-progress require "mediawiki/semantic-media-wiki:~6.0"; }; then
         echo "[init] Warning: Failed to install SemanticMediaWiki; startup will continue without SMW."
       fi
     fi

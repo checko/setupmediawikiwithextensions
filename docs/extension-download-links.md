@@ -10,7 +10,7 @@ This stack enables the following MediaWiki extensions. The table lists the upstr
 | MultimediaViewer | https://github.com/wikimedia/mediawiki-extensions-MultimediaViewer | Bundled with the upstream `mediawiki:1.41` image and enabled in `scripts/init-mediawiki.sh`.
 | Parsoid | https://packagist.org/packages/wikimedia/parsoid | Bundled with the upstream `mediawiki:1.41` image as a Composer vendor package; no extra download occurs. The init script only ensures `wfLoadExtension( 'Parsoid', "$IP/vendor/wikimedia/parsoid/extension.json" );`.
 | PdfHandler | https://github.com/wikimedia/mediawiki-extensions-PdfHandler | Bundled with the upstream `mediawiki:1.41` image and enabled in `scripts/init-mediawiki.sh`.
-| SemanticMediaWiki | https://github.com/SemanticMediaWiki/SemanticMediaWiki | Installed via Composer (`mediawiki/semantic-media-wiki:~4.1`) in `Dockerfile.mediawiki:75` and `scripts/init-mediawiki.sh:242,353`.
+| SemanticMediaWiki | https://github.com/SemanticMediaWiki/SemanticMediaWiki | Installed via Composer (`mediawiki/semantic-media-wiki:~6.0`) in `Dockerfile.mediawiki:82` and `scripts/init-mediawiki.sh:438,506`. Version 6.0+ required for MediaWiki 1.44 compatibility.
 | SyntaxHighlight_GeSHi | https://github.com/wikimedia/mediawiki-extensions-SyntaxHighlight_GeSHi | Cloned with branch `REL1_41` in `Dockerfile.mediawiki:38`.
 | TimedMediaHandler | https://github.com/wikimedia/mediawiki-extensions-TimedMediaHandler | Cloned with branch `REL1_41` in `Dockerfile.mediawiki:35`.
 | VisualEditor | https://github.com/wikimedia/mediawiki-extensions-VisualEditor | Bundled with the upstream `mediawiki:1.41` image; VisualEditor is enabled in `scripts/init-mediawiki.sh` alongside Parsoid.
