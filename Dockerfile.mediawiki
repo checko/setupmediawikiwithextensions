@@ -68,6 +68,13 @@ RUN set -eux; \
     composer install --no-dev --no-interaction --no-progress --no-scripts --ignore-platform-reqs \
       || composer update --no-dev --no-interaction --no-progress --no-scripts --ignore-platform-reqs
 
+# Patch WikiMarkdown for MediaWiki 1.44 Title class compatibility
+COPY patches/WikiMarkdown-mw144-title-compatibility.patch /tmp/WikiMarkdown-mw144-title-compatibility.patch
+RUN set -eux; \
+    cd /var/www/html/extensions/WikiMarkdown; \
+    patch -p1 < /tmp/WikiMarkdown-mw144-title-compatibility.patch; \
+    rm /tmp/WikiMarkdown-mw144-title-compatibility.patch
+
 # Install Semantic MediaWiki by cloning the extension and installing its deps
 RUN set -eux; \
     EXT_DIR=/var/www/html/extensions; \

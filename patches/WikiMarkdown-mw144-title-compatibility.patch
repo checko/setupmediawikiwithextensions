@@ -1,0 +1,30 @@
+--- a/includes/WikiMarkdown.php
++++ b/includes/WikiMarkdown.php
+@@ -280,11 +280,11 @@
+ 	/**
+ 	 * Handler for the ContentHandlerDefaultModelFor hook
+ 	 *
+-	 * @param Title $title Title in question
++	 * @param \MediaWiki\Title\Title $title Title in question
+ 	 * @param string &$model Model name. Use with CONTENT_MODEL_XXX constants.
+ 	 * @return bool|void True or no return value to continue or false to abort
+ 	 */
+-	public static function onContentHandlerDefaultModelFor( Title $title, &$model ) {
++	public static function onContentHandlerDefaultModelFor( \MediaWiki\Title\Title $title, &$model ) {
+ 		// Match .md pages.
+ 		if ( preg_match( '/\.md$/i', $title->getText() ) && $title->isContentPage() ) {
+ 			$model = CONTENT_MODEL_MARKDOWN;
+@@ -295,11 +295,11 @@
+ 	}
+
+ 	/**
+-	 * @param Title $title
++	 * @param \MediaWiki\Title\Title $title
+ 	 * @param string &$languageCode
+ 	 * @return bool
+ 	 */
+-	public static function onCodeEditorGetPageLanguage( Title $title, &$languageCode ) {
++	public static function onCodeEditorGetPageLanguage( \MediaWiki\Title\Title $title, &$languageCode ) {
+ 		if ( !ExtensionRegistry::getInstance()->isLoaded( 'CodeEditor' ) ) {
+ 			return true;
+ 		}
