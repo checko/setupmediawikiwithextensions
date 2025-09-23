@@ -5,7 +5,7 @@ MW_DIR="/var/www/html"
 cd "${MW_DIR}"
 
 # Paths for legacy upgrade support
-MW_LEGACY_PATH="/opt/mediawiki-1.35"
+MW_LEGACY_PATH="/opt/mediawiki-1.39"
 MW_MINIMAL_SETTINGS="/opt/mediawiki/LocalSettings.minimal.php"
 
 NEED_EXTENSION_BOOTSTRAP=0
@@ -104,9 +104,9 @@ run_update_with_legacy_support() {
     return 0
   fi
 
-  if grep -q "Can not upgrade from versions older than 1.35" "$log_file"; then
+  if grep -q "Can not upgrade from versions older than 1.39" "$log_file"; then
     if [ -x "${MW_LEGACY_PATH}/maintenance/update.php" ]; then
-      echo "[upgrade:pre135] Detected pre-1.35 database. Running intermediate upgrade via MediaWiki 1.35..."
+      echo "[upgrade:pre139] Detected pre-1.39 database. Running intermediate upgrade via MediaWiki 1.39..."
       local temp_conf="/tmp/LocalSettings.pre135.php"
       if [ -f "$MW_MINIMAL_SETTINGS" ]; then
         cp -f "$MW_MINIMAL_SETTINGS" "$temp_conf"
@@ -119,14 +119,14 @@ run_update_with_legacy_support() {
       set -e
       rm -f "$temp_conf"
       if [ "$status" -eq 0 ]; then
-        echo "[upgrade:pre135] Intermediate upgrade complete. Re-running MediaWiki 1.41 updater..."
+        echo "[upgrade:pre139] Intermediate upgrade complete. Re-running MediaWiki 1.44 updater..."
         set +e
         php maintenance/update.php --quick --conf "$conf_file" 2>&1 | tee "$log_file"
         status=${PIPESTATUS[0]}
         set -e
       fi
     else
-      echo "[upgrade:pre135] Warning: MediaWiki 1.35 assets missing; unable to perform automatic intermediate upgrade." >&2
+      echo "[upgrade:pre139] Warning: MediaWiki 1.39 assets missing; unable to perform automatic intermediate upgrade." >&2
     fi
   fi
 

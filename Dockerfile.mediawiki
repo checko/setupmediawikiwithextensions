@@ -1,4 +1,4 @@
-FROM mediawiki:1.41
+FROM mediawiki:1.44
 
 # Install required system packages for PdfHandler and tooling
 RUN apt-get update \
@@ -29,13 +29,13 @@ RUN set -eux; \
     EXT_DIR=/var/www/html/extensions; \
     mkdir -p "$EXT_DIR"; \
     if [ ! -d "$EXT_DIR/MsUpload" ]; then \
-      git clone --depth 1 -b REL1_41 https://github.com/wikimedia/mediawiki-extensions-MsUpload "$EXT_DIR/MsUpload"; \
+      git clone --depth 1 -b REL1_44 https://github.com/wikimedia/mediawiki-extensions-MsUpload "$EXT_DIR/MsUpload"; \
     fi; \
     if [ ! -d "$EXT_DIR/TimedMediaHandler" ]; then \
-      git clone --depth 1 -b REL1_41 https://github.com/wikimedia/mediawiki-extensions-TimedMediaHandler "$EXT_DIR/TimedMediaHandler"; \
+      git clone --depth 1 -b REL1_44 https://github.com/wikimedia/mediawiki-extensions-TimedMediaHandler "$EXT_DIR/TimedMediaHandler"; \
     fi; \
     if [ ! -d "$EXT_DIR/SyntaxHighlight_GeSHi" ]; then \
-      git clone --depth 1 -b REL1_41 https://github.com/wikimedia/mediawiki-extensions-SyntaxHighlight_GeSHi "$EXT_DIR/SyntaxHighlight_GeSHi"; \
+      git clone --depth 1 -b REL1_44 https://github.com/wikimedia/mediawiki-extensions-SyntaxHighlight_GeSHi "$EXT_DIR/SyntaxHighlight_GeSHi"; \
     fi; \
     if [ ! -d "$EXT_DIR/WikiMarkdown" ]; then \
       git clone --depth 1 https://github.com/kuenzign/WikiMarkdown "$EXT_DIR/WikiMarkdown"; \
@@ -94,12 +94,12 @@ RUN mkdir -p /opt/mediawiki
 COPY templates/LocalSettings.minimal.php /opt/mediawiki/LocalSettings.minimal.php
 
 # Bundle MediaWiki 1.35 maintenance scripts for automatic intermediate upgrades
-ARG MW_135_VERSION=1.35.13
+ARG MW_135_VERSION=1.39.8
 RUN set -eux; \
-    curl -fsSL "https://releases.wikimedia.org/mediawiki/1.35/mediawiki-${MW_135_VERSION}.tar.gz" -o /tmp/mediawiki-1.35.tar.gz; \
+    curl -fsSL "https://releases.wikimedia.org/mediawiki/1.39/mediawiki-${MW_135_VERSION}.tar.gz" -o /tmp/mediawiki-1.35.tar.gz; \
     mkdir -p /opt; \
     tar -xzf /tmp/mediawiki-1.35.tar.gz -C /opt; \
-    mv /opt/mediawiki-${MW_135_VERSION} /opt/mediawiki-1.35; \
+    mv /opt/mediawiki-${MW_135_VERSION} /opt/mediawiki-1.39; \
     rm -f /tmp/mediawiki-1.35.tar.gz; \
     rm -rf /opt/mediawiki-1.35/cache
 

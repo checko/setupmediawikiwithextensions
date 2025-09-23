@@ -7,7 +7,7 @@ A quick-start MediaWiki stack using Docker Compose, pre-wired with commonly used
 - MultimediaViewer
 - PdfHandler
 - SemanticMediaWiki (SMW) — baked into the image at build time
-- VisualEditor (uses built-in Parsoid in MW 1.41)
+- VisualEditor (uses built-in Parsoid in MW 1.44)
 - CodeEditor
 
 Port is mapped to `9090` on the host.
@@ -59,7 +59,7 @@ Place your dump/archive files in `./data` and enable one-time restore on init vi
 What happens on first start (with `MW_RESTORE_ON_INIT=1`):
 - Database restore runs first. If the DB is empty, the dump is imported. If the DB has tables and `MW_FORCE_DB_RESTORE=1`, it will drop/recreate the database before importing.
 - A minimal `LocalSettings.php` (seeded from `templates/LocalSettings.minimal.php` inside the image) is copied into place when needed so there is no interactive setup page.
-- `maintenance/update.php` runs to align the schema with this container’s MediaWiki. If the imported database predates MediaWiki 1.35, the container automatically runs the bundled MediaWiki 1.35 updater first, then re-runs the 1.41 updater.
+- `maintenance/update.php` runs to align the schema with this container's MediaWiki. If the imported database predates MediaWiki 1.39, the container automatically runs the bundled MediaWiki 1.39 updater first, then re-runs the 1.44 updater.
 - Uploads archive is extracted into `/var/www/html/images`, permissions are fixed, and image metadata is refreshed.
 - If the uploads archive is a ZIP and uses a non‑UTF‑8 code page, set `MW_ZIP_ENCODING` (for example `cp950` or `gbk`). The init script automatically re-encodes any `#Uxxxx`-style filenames so Chinese/Unicode names render correctly.
 - Marker files under `/data` prevent repeated restores on later restarts.
@@ -91,10 +91,10 @@ See docs/EXPORT-SOURCE.md for step‑by‑step commands to dump the DB and archi
 - Prefer `tar.gz` for future transfers to avoid encoding issues entirely.
 
 ## What’s in the stack
-- `mediawiki` service: custom image based on `mediawiki:1.41`, plus system tools for PdfHandler and Composer. Extensions are cloned/installed during image build.
+- `mediawiki` service: custom image based on `mediawiki:1.44`, plus system tools for PdfHandler and Composer. Extensions are cloned/installed during image build.
   - Includes `librsvg2-bin` for high‑quality SVG rasterization via `rsvg-convert`.
   - Includes Semantic MediaWiki installed at build time (`extensions/SemanticMediaWiki`).
-  - Bundled skins (`Vector`, `MinervaNeue`, `MonoBook`, `Timeless` — including the Vector 2022 variant) are enabled automatically after the schema is brought up to 1.35+; keep the minimal restore stub at the default so the legacy upgrader can run.
+  - Bundled skins (`Vector`, `MinervaNeue`, `MonoBook`, `Timeless` — including the Vector 2022 variant) are enabled automatically after the schema is brought up to 1.39+; keep the minimal restore stub at the default so the legacy upgrader can run.
 - `db` service: `mariadb:10.6` with persistent volume.
 - Volumes:
   - Database data in a named volume (`db_data`).
@@ -193,7 +193,7 @@ See docs/EXPORT-SOURCE.md for step‑by‑step commands to dump the DB and archi
   - Start web: `docker compose start mediawiki`
 - If your dump contains `CREATE DATABASE`/`USE` statements for a different DB name, strip or replace them so the import targets `$MW_DB_NAME` (default `wikidb`).
 - Restoring uploads: DB restore does not include files. To restore images, copy the prior wiki’s `images/` directory into the `wiki_images` volume (e.g., `docker compose cp /path/to/images/. mediawiki:/var/www/html/images/`).
-- Older-than-1.35 dumps: see `docs/RESTORE-DB.md` for the 1.35 intermediate upgrade step and a fix for a common SMW actor conflict.
+- Older-than-1.39 dumps: see `docs/RESTORE-DB.md` for the 1.39 intermediate upgrade step and a fix for a common SMW actor conflict.
 
 ## Troubleshooting
 - Blank/failed VE edits: ensure `MW_SITE_SERVER` matches how you access the wiki (scheme/host/port).
