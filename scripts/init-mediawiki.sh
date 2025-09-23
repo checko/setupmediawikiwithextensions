@@ -36,14 +36,22 @@ NEED_EXTENSION_BOOTSTRAP=0
 : "${MW_ZIP_ENCODING:=}"
 
 echo "[init] Waiting for database at ${MW_DB_HOST}..."
-until mysqladmin ping -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --silent; do
+until mysqladmin ping -h"${MW_DB_HOST}" -u root -p"${MW_DB_ROOT_PASSWORD}" --skip-ssl --silent; do
   sleep 2
 done
 echo "[init] Database is up."
 
+# Additional check: ensure the application user and database are ready
+echo "[init] Verifying application database access..."
+until mysql -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --skip-ssl -e "SELECT 1" >/dev/null 2>&1; do
+  echo "[init] Waiting for database user access..."
+  sleep 2
+done
+echo "[init] Database user access confirmed."
+
 # Helper: detect whether the target database already has core MW tables
 db_is_initialized() {
-  mysql -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" \
+  mysql -h"${MW_DB_HOST}" -u"${MW_DB_USER}" -p"${MW_DB_PASS}" --skip-ssl \
     -e "SELECT 1 FROM ${MW_DB_NAME}.page LIMIT 1" >/dev/null 2>&1
 }
 
@@ -104,7 +112,7 @@ run_update_with_legacy_support() {
     return 0
   fi
 
-  if grep -q "Can not upgrade from versions older than 1.39" "$log_file"; then
+  if grep -q "Can not upgrade from versions older than 1.35" "$log_file"; then
     if [ -x "${MW_LEGACY_PATH}/maintenance/update.php" ]; then
       echo "[upgrade:pre139] Detected pre-1.39 database. Running intermediate upgrade via MediaWiki 1.39..."
       local temp_conf="/tmp/LocalSettings.pre135.php"
@@ -200,7 +208,7 @@ do_auto_restore() {
       if db_is_initialized; then
         if [ "$(normalize_bool "$MW_FORCE_DB_RESTORE")" = "1" ]; then
           echo "[restore:init] Dropping and recreating database ${MW_DB_NAME} (MW_FORCE_DB_RESTORE=1)"
-          mysql -h"${MW_DB_HOST}" -u root -p"${MW_DB_ROOT_PASSWORD}" -e "DROP DATABASE IF EXISTS \`${MW_DB_NAME}\`; CREATE DATABASE \`${MW_DB_NAME}\` CHARACTER SET binary;"
+          mysql -h"${MW_DB_HOST}" -u root -p"${MW_DB_ROOT_PASSWORD}" --skip-ssl -e "DROP DATABASE IF EXISTS \`${MW_DB_NAME}\`; CREATE DATABASE \`${MW_DB_NAME}\` CHARACTER SET binary;"
         else
           echo "[restore:init] Database already has tables; skipping DB import (set MW_FORCE_DB_RESTORE=1 to overwrite)."
           :
@@ -210,8 +218,8 @@ do_auto_restore() {
       if ! db_is_initialized; then
         echo "[restore:init] Importing SQL dump into ${MW_DB_NAME} ... (this may take a while)"
         case "$base" in
-          *.sql.gz|*.gz) gzip -dc "${MW_RESTORE_DB_DUMP}" | mysql -h"${MW_DB_HOST}" -u root -p"${MW_DB_ROOT_PASSWORD}" "${MW_DB_NAME}" ;;
-          *.sql)        mysql -h"${MW_DB_HOST}" -u root -p"${MW_DB_ROOT_PASSWORD}" "${MW_DB_NAME}" < "${MW_RESTORE_DB_DUMP}" ;;
+          *.sql.gz|*.gz) gzip -dc "${MW_RESTORE_DB_DUMP}" | mysql -h"${MW_DB_HOST}" -u root -p"${MW_DB_ROOT_PASSWORD}" --skip-ssl "${MW_DB_NAME}" ;;
+          *.sql)        mysql -h"${MW_DB_HOST}" -u root -p"${MW_DB_ROOT_PASSWORD}" --skip-ssl "${MW_DB_NAME}" < "${MW_RESTORE_DB_DUMP}" ;;
           *) echo "[restore:init] Unsupported DB dump extension: $base" ;;
         esac
         echo "[restore:init] DB import complete."
