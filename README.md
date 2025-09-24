@@ -90,10 +90,11 @@ See docs/EXPORT-SOURCE.md for step‑by‑step commands to dump the DB and archi
 - For automated restore at startup, set `MW_ZIP_ENCODING=cp950` (or `gbk`) in `.env`.
 - Prefer `tar.gz` for future transfers to avoid encoding issues entirely.
 
-## What’s in the stack
+## What's in the stack
 - `mediawiki` service: custom image based on `mediawiki:1.44`, plus system tools for PdfHandler and Composer. Extensions are cloned/installed during image build.
   - Includes `librsvg2-bin` for high‑quality SVG rasterization via `rsvg-convert`.
   - Includes Semantic MediaWiki installed at build time (`extensions/SemanticMediaWiki`).
+  - **All extensions fully compatible with MediaWiki 1.44** via automatic compatibility patches.
   - Bundled skins (`Vector`, `MinervaNeue`, `MonoBook`, `Timeless` — including the Vector 2022 variant) are enabled automatically after the schema is brought up to 1.39+; keep the minimal restore stub at the default so the legacy upgrader can run.
 - `db` service: `mariadb:10.6` with persistent volume.
 - Volumes:
@@ -124,8 +125,16 @@ See docs/EXPORT-SOURCE.md for step‑by‑step commands to dump the DB and archi
 - MsUpload, WikiEditor, MultimediaViewer, PdfHandler, VisualEditor, CodeEditor
 - SyntaxHighlight (with Pygments for code blocks)
 - SemanticMediaWiki (installed at image build via Composer create-project; enabled by default)
-- WikiMarkdown (adds `<markdown>...</markdown>` tag and Markdown content model)
-- Mermaid (parser function `#mermaid` for flowcharts/diagrams)
+- WikiMarkdown (adds `<markdown>...</markdown>` tag and Markdown content model) ✅ **MW 1.44 Compatible**
+- Mermaid (parser function `#mermaid` for flowcharts/diagrams) ✅ **MW 1.44 Compatible**
+
+### MediaWiki 1.44 Compatibility
+All extensions have been patched for full MediaWiki 1.44 compatibility. Automatic patches are applied during image build for:
+- **WikiMarkdown**: Parser, Linker, Html class namespacing + deprecated method replacement
+- **Mermaid**: Html and Parser class namespace imports
+- **ResourceLoader**: Module class compatibility fixes
+
+See `docs/MEDIAWIKI-144-EXTENSION-FIXES.md` for detailed information.
 
 ### Markdown Usage
 - Inline/block tag: wrap content in `<markdown>...</markdown>` on any page.
