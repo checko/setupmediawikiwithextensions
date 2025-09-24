@@ -48,14 +48,31 @@ The fixes are automatically applied during Docker image build via:
 
 ## Mermaid Extension
 
-### Issues Identified
+### Issues Fixed
 
 1. **Html Class Namespacing**
    - Error: `Class "Html" not found` in `MermaidParserFunction.php:84`
-   - Fix required: `Html` → `MediaWiki\Html\Html`
+   - Fix: Updated `use Html;` → `use MediaWiki\Html\Html;`
 
-### Status
-🔧 **In Progress** - Fix being implemented
+2. **Parser Class Namespacing**
+   - Fix: Updated `use Parser;` → `use MediaWiki\Parser\Parser;`
+
+### Files Modified
+
+- `src/MermaidParserFunction.php`
+
+### Implementation
+
+The fixes are automatically applied during Docker image build via:
+- `patches/Mermaid-mw144-class-compatibility.patch`
+
+### Testing
+
+✅ **Verified Working:**
+- Graph diagrams rendering: `{{#mermaid:graph TD; A-->B}}`
+- Sequence diagrams: `{{#mermaid:sequenceDiagram...}}`
+- Forest theme configuration
+- Proper HTML generation with `ext-mermaid` class
 
 ## Future Extension Compatibility
 
@@ -88,7 +105,8 @@ User                     → MediaWiki\User\User
 - ✅ Fixed WikiMarkdown ResourceLoader compatibility
 - ✅ Fixed WikiMarkdown Parser, Linker, Html namespace issues
 - ✅ Replaced deprecated makeHeadline method
-- 🔧 Started Mermaid extension Html namespace fix
+- ✅ Fixed Mermaid extension Html and Parser namespace issues
+- ✅ All major extensions now compatible with MediaWiki 1.44
 
 ## References
 

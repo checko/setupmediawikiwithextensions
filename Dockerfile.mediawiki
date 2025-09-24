@@ -75,6 +75,13 @@ RUN set -eux; \
     patch -p1 < /tmp/WikiMarkdown-mw144-complete-compatibility.patch; \
     rm /tmp/WikiMarkdown-mw144-complete-compatibility.patch
 
+# Patch Mermaid extension for MediaWiki 1.44 class compatibility
+COPY patches/Mermaid-mw144-class-compatibility.patch /tmp/Mermaid-mw144-class-compatibility.patch
+RUN set -eux; \
+    cd /var/www/html/extensions/Mermaid; \
+    patch -p1 < /tmp/Mermaid-mw144-class-compatibility.patch; \
+    rm /tmp/Mermaid-mw144-class-compatibility.patch
+
 # Install Semantic MediaWiki by cloning the extension and installing its deps
 RUN set -eux; \
     EXT_DIR=/var/www/html/extensions; \

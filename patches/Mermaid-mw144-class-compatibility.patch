@@ -1,0 +1,13 @@
+--- a/src/MermaidParserFunction.php
++++ b/src/MermaidParserFunction.php
+@@ -2,8 +2,8 @@
+
+ namespace Mermaid;
+
+-use Parser;
+-use Html;
++use MediaWiki\Parser\Parser;
++use MediaWiki\Html\Html;
+ use MediaWiki\MediaWikiServices;
+
+ /**
