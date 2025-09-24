@@ -1,0 +1,62 @@
+--- a/includes/WikiMarkdown.php
++++ b/includes/WikiMarkdown.php
+@@ -21,7 +21,7 @@
+ 	/**
+ 	 * Register parser hook
+ 	 *
+-	 * @param Parser $parser
++	 * @param MediaWiki\Parser\Parser $parser
+ 	 */
+-	public static function onParserFirstCallInit( Parser $parser ) {
++	public static function onParserFirstCallInit( MediaWiki\Parser\Parser $parser ) {
+ 		$parser->setHook( 'markdown', [ 'WikiMarkdown', 'parserHook' ] );
+@@ -32,11 +32,11 @@
+ 	 *
+ 	 * @param string $text
+ 	 * @param array $args
+-	 * @param Parser $parser
++	 * @param MediaWiki\Parser\Parser $parser
+ 	 * @return string
+ 	 * @throws MWException
+ 	 */
+-	public static function parserHook( $text, $args, $parser ) {
++	public static function parserHook( $text, $args, MediaWiki\Parser\Parser $parser ) {
+ 		global $wgAllowMarkdownExtended;
+@@ -63,7 +63,7 @@
+ 				$url = $matches[2];
+ 				$cleanUrl = $parser->getUrlUtils()->expandUrl( $url );
+-				return Linker::makeExternalLink($cleanUrl, $text, true, $linkType, $parser->getExternalLinkAttribs($url), $parser->getTitle());
++				return MediaWiki\Linker\Linker::makeExternalLink($cleanUrl, $text, true, $linkType, $parser->getExternalLinkAttribs($url), $parser->getTitle());
+ 			},
+ 			$out
+ 		);
+@@ -83,7 +83,7 @@
+ 				} else {
+ 					$refers[$anchor] = true;
+ 				}
+-				return Linker::makeHeadline($matches[1], '>', $anchor, $matches[4], '');
++				return '<h' . strlen($matches[1]) . ' id="' . htmlspecialchars($anchor) . '">' . htmlspecialchars($matches[4]) . '</h' . strlen($matches[1]) . '>';
+ 			},
+ 			$out
+ 		);
+@@ -172,7 +172,7 @@
+ 		}
+
+ 		if ( isset( $args['class'] ) ) {
+-			$out = Html::rawElement( 'span', $htmlAttribs, $out );
++			$out = MediaWiki\Html\Html::rawElement( 'span', $htmlAttribs, $out );
+ 		} else {
+ 			$htmlAttribs['class'] = self::MARKDOWN_CSS_CLASS;
+ 		}
+@@ -182,9 +182,9 @@
+ 		if ( isset( $args['style'] ) && $args['style'] === 'inset' ) {
+ 			$htmlAttribs['style'] = 'margin-left: 20px';
+ 		}
+-			$out = Html::openElement( 'div', $htmlAttribs ) .
++			$out = MediaWiki\Html\Html::openElement( 'div', $htmlAttribs ) .
+ 				$out .
+-				Html::closeElement( 'div' );
++				MediaWiki\Html\Html::closeElement( 'div' );
+
+ 		return $out;
+ 	}
